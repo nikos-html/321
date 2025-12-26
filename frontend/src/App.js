@@ -795,8 +795,8 @@ const AppContent = ({ toast, showToast, page, setPage, generatorRef }) => {
           {user && (
             <section className="generator-section container" ref={generatorRef}>
               <div className="section-header">
-                <h2 className="section-title">⚡ Generator dokumentów</h2>
-                <p className="section-subtitle">Wypełnij formularz i wygeneruj profesjonalny dokument</p>
+                <h2 className="section-title">// GENERATOR</h2>
+                <p className="section-subtitle">Initialize document generation protocol</p>
               </div>
               <Generator showToast={showToast} />
             </section>
