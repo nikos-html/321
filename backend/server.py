@@ -10,15 +10,17 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import uuid
 from dotenv import load_dotenv
-from sqlalchemy.orm import Session
 import html as html_escape
 
 load_dotenv()
 
-from database import get_db, init_db, User, Document, SubscriptionType, UserRole
+from database import (
+    init_db, get_db, SubscriptionType, UserRole,
+    user_has_access, user_days_remaining, create_user_dict, create_document_dict
+)
 from auth import (
     get_current_user, get_admin_user, get_user_with_access, get_current_user_optional,
-    create_access_token, verify_password, get_password_hash, create_user,
+    create_access_token, verify_password, get_password_hash, create_user_in_db,
     verify_google_token
 )
 
@@ -26,23 +28,22 @@ app = FastAPI(title="DocGen - Generator Dokumentów")
 
 @app.on_event("startup")
 async def startup():
-    init_db()
-    db = next(get_db())
-    admin = db.query(User).filter(User.email == "admin@docgen.pl").first()
+    await init_db()
+    db = get_db()
+    
+    # Create default admin if not exists
+    admin = await db.users.find_one({"email": "admin@docgen.pl"}, {"_id": 0})
     if not admin:
-        admin = User(
-            id=str(uuid.uuid4()),
+        admin = create_user_dict(
+            user_id=str(uuid.uuid4()),
             email="admin@docgen.pl",
             hashed_password=get_password_hash("admin123"),
             name="Administrator",
-            role=UserRole.ADMIN,
-            subscription_type=SubscriptionType.LIFETIME,
-            created_at=datetime.utcnow()
+            role=UserRole.ADMIN.value,
+            subscription_type=SubscriptionType.LIFETIME.value
         )
-        db.add(admin)
-        db.commit()
+        await db.users.insert_one(admin)
         print("✅ Default admin created: admin@docgen.pl / admin123")
-    db.close()
 
 app.add_middleware(
     CORSMiddleware,
@@ -170,18 +171,6 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: dict
-
-class UserResponse(BaseModel):
-    id: str
-    email: str
-    name: Optional[str]
-    role: str
-    subscription_type: str
-    subscription_expires: Optional[datetime]
-    has_access: bool
-    days_remaining: int
-    documents_generated: int
-    created_at: datetime
 
 class DocumentRequest(BaseModel):
     template: str
@@ -357,53 +346,59 @@ def send_email(to_email: str, subject: str, html_content: str, from_name: str = 
         print(f"Email error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to send email: {str(e)}")
 
-def user_to_response(user: User) -> UserResponse:
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        name=user.name,
-        role=user.role.value,
-        subscription_type=user.subscription_type.value,
-        subscription_expires=user.subscription_expires,
-        has_access=user.has_access(),
-        days_remaining=user.days_remaining(),
-        documents_generated=user.documents_generated,
-        created_at=user.created_at
-    )
+def user_to_response(user: dict) -> dict:
+    return {
+        "id": user.get("id"),
+        "email": user.get("email"),
+        "name": user.get("name"),
+        "role": user.get("role", UserRole.USER.value),
+        "subscription_type": user.get("subscription_type", SubscriptionType.NONE.value),
+        "subscription_expires": user.get("subscription_expires").isoformat() if user.get("subscription_expires") else None,
+        "has_access": user_has_access(user),
+        "days_remaining": user_days_remaining(user),
+        "documents_generated": user.get("documents_generated", 0),
+        "created_at": user.get("created_at").isoformat() if user.get("created_at") else None,
+        "is_active": user.get("is_active", True)
+    }
 
 # ==================== AUTH ENDPOINTS ====================
 
 @app.post("/api/auth/register", response_model=TokenResponse)
-async def register(data: UserRegister, db: Session = Depends(get_db)):
-    existing = db.query(User).filter(User.email == data.email).first()
+async def register(data: UserRegister):
+    db = get_db()
+    existing = await db.users.find_one({"email": data.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    user = create_user(db, email=data.email, password=data.password, name=data.name)
-    token = create_access_token({"sub": user.id})
-    return TokenResponse(access_token=token, user=user_to_response(user).dict())
+    user = await create_user_in_db(email=data.email, password=data.password, name=data.name)
+    token = create_access_token({"sub": user["id"]})
+    return TokenResponse(access_token=token, user=user_to_response(user))
 
 @app.post("/api/auth/login", response_model=TokenResponse)
-async def login(data: UserLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == data.email).first()
+async def login(data: UserLogin):
+    db = get_db()
+    user = await db.users.find_one({"email": data.email}, {"_id": 0})
     
-    if not user or not user.hashed_password:
+    if not user or not user.get("hashed_password"):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not verify_password(data.password, user.hashed_password):
+    if not verify_password(data.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    if not user.is_active:
+    if not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="Account disabled")
     
-    user.last_login = datetime.utcnow()
-    db.commit()
+    # Update last login
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_login": datetime.utcnow()}}
+    )
     
-    token = create_access_token({"sub": user.id})
-    return TokenResponse(access_token=token, user=user_to_response(user).dict())
+    token = create_access_token({"sub": user["id"]})
+    return TokenResponse(access_token=token, user=user_to_response(user))
 
 @app.post("/api/auth/google", response_model=TokenResponse)
-async def google_login(data: GoogleLogin, db: Session = Depends(get_db)):
+async def google_login(data: GoogleLogin):
     google_user = await verify_google_token(data.access_token)
     
     if not google_user:
@@ -413,25 +408,35 @@ async def google_login(data: GoogleLogin, db: Session = Depends(get_db)):
     google_id = google_user.get("sub")
     name = google_user.get("name")
     
-    user = db.query(User).filter((User.email == email) | (User.google_id == google_id)).first()
+    db = get_db()
+    user = await db.users.find_one(
+        {"$or": [{"email": email}, {"google_id": google_id}]},
+        {"_id": 0}
+    )
     
     if not user:
-        user = create_user(db, email=email, name=name, google_id=google_id, is_google_user=True)
+        user = await create_user_in_db(email=email, name=name, google_id=google_id, is_google_user=True)
     else:
-        if not user.google_id:
-            user.google_id = google_id
-            user.is_google_user = True
-        user.last_login = datetime.utcnow()
-        db.commit()
+        if not user.get("google_id"):
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {"google_id": google_id, "is_google_user": True, "last_login": datetime.utcnow()}}
+            )
+        else:
+            await db.users.update_one(
+                {"id": user["id"]},
+                {"$set": {"last_login": datetime.utcnow()}}
+            )
+        user = await db.users.find_one({"id": user["id"]}, {"_id": 0})
     
-    if not user.is_active:
+    if not user.get("is_active", True):
         raise HTTPException(status_code=403, detail="Account disabled")
     
-    token = create_access_token({"sub": user.id})
-    return TokenResponse(access_token=token, user=user_to_response(user).dict())
+    token = create_access_token({"sub": user["id"]})
+    return TokenResponse(access_token=token, user=user_to_response(user))
 
-@app.get("/api/auth/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(get_current_user)):
+@app.get("/api/auth/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
     return user_to_response(current_user)
 
 # ==================== TEMPLATE ENDPOINTS ====================
@@ -457,8 +462,7 @@ async def get_templates():
 @app.post("/api/generate", response_model=DocumentResponse)
 async def generate_document(
     request: DocumentRequest,
-    current_user: User = Depends(get_user_with_access),
-    db: Session = Depends(get_db)
+    current_user: dict = Depends(get_user_with_access)
 ):
     if request.template not in TEMPLATE_CONFIG:
         raise HTTPException(status_code=400, detail=f"Unknown template: {request.template}")
@@ -509,9 +513,10 @@ async def generate_document(
         print(f"Email sending failed: {str(e)}")
     
     # Save to DB
-    doc = Document(
-        id=document_id,
-        user_id=current_user.id,
+    db = get_db()
+    doc = create_document_dict(
+        doc_id=document_id,
+        user_id=current_user["id"],
         template=request.template,
         name=f"{request.brand} {request.product}",
         email=request.email,
@@ -521,9 +526,13 @@ async def generate_document(
         additional_info=f"Size: {request.size}" if request.size else "",
         email_sent=email_sent
     )
-    db.add(doc)
-    current_user.documents_generated += 1
-    db.commit()
+    await db.documents.insert_one(doc)
+    
+    # Update user's document count
+    await db.users.update_one(
+        {"id": current_user["id"]},
+        {"$inc": {"documents_generated": 1}}
+    )
     
     return DocumentResponse(
         success=True,
@@ -536,7 +545,7 @@ async def generate_document(
 @app.post("/api/preview")
 async def preview_document(
     request: DocumentRequest,
-    current_user: User = Depends(get_user_with_access)
+    current_user: dict = Depends(get_user_with_access)
 ):
     if request.template not in TEMPLATE_CONFIG:
         raise HTTPException(status_code=400, detail=f"Unknown template: {request.template}")
@@ -577,21 +586,23 @@ async def preview_document(
     return {"success": True, "html_content": html_content, "document_id": document_id}
 
 @app.get("/api/documents")
-async def get_my_documents(
-    current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
-):
-    documents = db.query(Document).filter(Document.user_id == current_user.id).order_by(Document.created_at.desc()).limit(50).all()
+async def get_my_documents(current_user: dict = Depends(get_current_user)):
+    db = get_db()
+    documents = await db.documents.find(
+        {"user_id": current_user["id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
     return {
         "documents": [
             {
-                "id": doc.id,
-                "template": doc.template,
-                "name": doc.name,
-                "email": doc.email,
-                "amount": doc.amount,
-                "created_at": doc.created_at.isoformat(),
-                "email_sent": doc.email_sent
+                "id": doc["id"],
+                "template": doc["template"],
+                "name": doc["name"],
+                "email": doc["email"],
+                "amount": doc["amount"],
+                "created_at": doc["created_at"].isoformat() if doc.get("created_at") else None,
+                "email_sent": doc.get("email_sent", False)
             }
             for doc in documents
         ]
@@ -600,18 +611,29 @@ async def get_my_documents(
 # ==================== ADMIN ENDPOINTS ====================
 
 @app.get("/api/admin/users")
-async def admin_get_users(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    users = db.query(User).order_by(User.created_at.desc()).all()
-    return {"users": [user_to_response(u).dict() for u in users]}
+async def admin_get_users(admin: dict = Depends(get_admin_user)):
+    db = get_db()
+    users = await db.users.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    return {"users": [user_to_response(u) for u in users]}
 
 @app.get("/api/admin/stats")
-async def admin_get_stats(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    total_users = db.query(User).count()
-    active_subscriptions = db.query(User).filter(
-        (User.subscription_type == SubscriptionType.LIFETIME) |
-        ((User.subscription_type == SubscriptionType.MONTHLY) & (User.subscription_expires > datetime.utcnow()))
-    ).count()
-    total_documents = db.query(Document).count()
+async def admin_get_stats(admin: dict = Depends(get_admin_user)):
+    db = get_db()
+    total_users = await db.users.count_documents({})
+    
+    # Count active subscriptions
+    now = datetime.utcnow()
+    active_subscriptions = await db.users.count_documents({
+        "$or": [
+            {"subscription_type": SubscriptionType.LIFETIME.value},
+            {
+                "subscription_type": SubscriptionType.MONTHLY.value,
+                "subscription_expires": {"$gt": now}
+            }
+        ]
+    })
+    
+    total_documents = await db.documents.count_documents({})
     
     return {
         "total_users": total_users,
@@ -620,47 +642,60 @@ async def admin_get_stats(admin: User = Depends(get_admin_user), db: Session = D
     }
 
 @app.post("/api/admin/grant-access")
-async def admin_grant_access(data: AdminGrantAccess, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == data.user_id).first()
+async def admin_grant_access(data: AdminGrantAccess, admin: dict = Depends(get_admin_user)):
+    db = get_db()
+    user = await db.users.find_one({"id": data.user_id}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    update_data = {}
     if data.subscription_type == "lifetime":
-        user.subscription_type = SubscriptionType.LIFETIME
-        user.subscription_expires = None
+        update_data = {
+            "subscription_type": SubscriptionType.LIFETIME.value,
+            "subscription_expires": None
+        }
     elif data.subscription_type == "monthly":
-        user.subscription_type = SubscriptionType.MONTHLY
-        user.subscription_expires = datetime.utcnow() + timedelta(days=data.days or 30)
+        update_data = {
+            "subscription_type": SubscriptionType.MONTHLY.value,
+            "subscription_expires": datetime.utcnow() + timedelta(days=data.days or 30)
+        }
     else:
         raise HTTPException(status_code=400, detail="Invalid subscription type")
     
-    db.commit()
-    return {"success": True, "message": f"Granted {data.subscription_type} access to {user.email}"}
+    await db.users.update_one({"id": data.user_id}, {"$set": update_data})
+    return {"success": True, "message": f"Granted {data.subscription_type} access to {user['email']}"}
 
 @app.post("/api/admin/revoke-access/{user_id}")
-async def admin_revoke_access(user_id: str, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
+async def admin_revoke_access(user_id: str, admin: dict = Depends(get_admin_user)):
+    db = get_db()
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    user.subscription_type = SubscriptionType.NONE
-    user.subscription_expires = None
-    db.commit()
-    return {"success": True, "message": f"Revoked access for {user.email}"}
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"subscription_type": SubscriptionType.NONE.value, "subscription_expires": None}}
+    )
+    return {"success": True, "message": f"Revoked access for {user['email']}"}
 
 @app.patch("/api/admin/users/{user_id}")
-async def admin_update_user(user_id: str, data: AdminUserUpdate, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == user_id).first()
+async def admin_update_user(user_id: str, data: AdminUserUpdate, admin: dict = Depends(get_admin_user)):
+    db = get_db()
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    update_data = {}
     if data.is_active is not None:
-        user.is_active = data.is_active
+        update_data["is_active"] = data.is_active
     if data.role is not None:
-        user.role = UserRole.ADMIN if data.role == "admin" else UserRole.USER
+        update_data["role"] = UserRole.ADMIN.value if data.role == "admin" else UserRole.USER.value
     
-    db.commit()
-    return {"success": True, "user": user_to_response(user).dict()}
+    if update_data:
+        await db.users.update_one({"id": user_id}, {"$set": update_data})
+    
+    updated_user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    return {"success": True, "user": user_to_response(updated_user)}
 
 if __name__ == "__main__":
     import uvicorn
