@@ -30,8 +30,7 @@ async def init_db():
     # Only index google_id where it exists and is not null
     await db.users.create_index(
         "google_id", 
-        unique=True, 
-        sparse=True,
+        unique=True,
         partialFilterExpression={"google_id": {"$type": "string"}}
     )
     await db.documents.create_index("user_id")
