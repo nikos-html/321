@@ -100,38 +100,37 @@ const AuthPage = ({ onSuccess, showToast }) => {
 
       if (res.ok) {
         login(data.access_token, data.user);
-        showToast(mode === 'login' ? 'Zalogowano pomyślnie!' : 'Konto utworzone!', 'success');
+        showToast(mode === 'login' ? 'Access granted' : 'Account created', 'success');
         onSuccess();
       } else {
-        showToast(data.detail || 'Błąd', 'error');
+        showToast(data.detail || 'Authentication failed', 'error');
       }
     } catch (e) {
-      showToast('Błąd połączenia', 'error');
+      showToast('Connection error', 'error');
     }
     setLoading(false);
   };
 
   const handleGoogleLogin = () => {
-    // For now, show message - Google OAuth requires setup
-    showToast('Google login wymaga konfiguracji OAuth w panelu Google Cloud', 'error');
+    showToast('Google OAuth requires configuration in Google Cloud Console', 'error');
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card glass">
         <div className="auth-header">
-          <h2>{mode === 'login' ? '🔐 Logowanie' : '📝 Rejestracja'}</h2>
-          <p>{mode === 'login' ? 'Zaloguj się do swojego konta' : 'Utwórz nowe konto'}</p>
+          <h2>{mode === 'login' ? '// LOGIN' : '// REGISTER'}</h2>
+          <p>{mode === 'login' ? 'Enter your credentials' : 'Create new account'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="auth-form">
           {mode === 'register' && (
             <div className="form-group">
-              <label className="input-label">Imię</label>
+              <label className="input-label">Identifier</label>
               <input
                 type="text"
                 className="input-field"
-                placeholder="Jan Kowalski"
+                placeholder="John Doe"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -143,7 +142,7 @@ const AuthPage = ({ onSuccess, showToast }) => {
             <input
               type="email"
               className="input-field"
-              placeholder="jan@example.com"
+              placeholder="user@domain.com"
               required
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -151,7 +150,7 @@ const AuthPage = ({ onSuccess, showToast }) => {
           </div>
 
           <div className="form-group">
-            <label className="input-label">Hasło *</label>
+            <label className="input-label">Password *</label>
             <input
               type="password"
               className="input-field"
@@ -163,12 +162,12 @@ const AuthPage = ({ onSuccess, showToast }) => {
           </div>
 
           <button type="submit" className="btn-primary btn-full" disabled={loading}>
-            {loading ? <span className="loader-small"></span> : (mode === 'login' ? 'Zaloguj się' : 'Zarejestruj się')}
+            {loading ? <span className="loader-small"></span> : (mode === 'login' ? '[ AUTHENTICATE ]' : '[ CREATE ACCOUNT ]')}
           </button>
         </form>
 
         <div className="auth-divider">
-          <span>lub</span>
+          <span>OR</span>
         </div>
 
         <button className="btn-google" onClick={handleGoogleLogin}>
@@ -178,14 +177,14 @@ const AuthPage = ({ onSuccess, showToast }) => {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          Kontynuuj z Google
+          Continue with Google
         </button>
 
         <div className="auth-switch">
           {mode === 'login' ? (
-            <p>Nie masz konta? <button onClick={() => setMode('register')}>Zarejestruj się</button></p>
+            <p>No account? <button onClick={() => setMode('register')}>Register</button></p>
           ) : (
-            <p>Masz już konto? <button onClick={() => setMode('login')}>Zaloguj się</button></p>
+            <p>Have account? <button onClick={() => setMode('login')}>Login</button></p>
           )}
         </div>
       </div>
