@@ -1097,8 +1097,8 @@ const AppContent = ({ toast, showToast, page, setPage, generatorRef }) => {
               
               <div className="hero-stats animate-fade-in">
                 <div className="stat-item">
-                  <div className="stat-value">3</div>
-                  <div className="stat-label">Templates</div>
+                  <div className="stat-value">15</div>
+                  <div className="stat-label">Szablonów</div>
                 </div>
                 <div className="stat-divider"></div>
                 <div className="stat-item">
