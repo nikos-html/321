@@ -1,20 +1,12 @@
-from sqlalchemy import create_engine, Column, String, Integer, Float, Boolean, DateTime, Text, ForeignKey, Enum as SQLEnum
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timedelta
 import enum
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/docgen")
+MONGO_URL = os.getenv("MONGO_URL", "mongodb://localhost:27017")
+DB_NAME = os.getenv("DB_NAME", "docgen")
 
-# Fix for Railway PostgreSQL URL
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
+# Enums
 class SubscriptionType(str, enum.Enum):
     NONE = "none"
     MONTHLY = "monthly"  # 30 dni
@@ -24,86 +16,107 @@ class UserRole(str, enum.Enum):
     USER = "user"
     ADMIN = "admin"
 
-class User(Base):
-    __tablename__ = "users"
-    
-    id = Column(String, primary_key=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=True)  # Null for Google users
-    name = Column(String, nullable=True)
-    
-    # Auth
-    is_google_user = Column(Boolean, default=False)
-    google_id = Column(String, nullable=True, unique=True)
-    
-    # Role & Access
-    role = Column(SQLEnum(UserRole), default=UserRole.USER)
-    subscription_type = Column(SQLEnum(SubscriptionType), default=SubscriptionType.NONE)
-    subscription_expires = Column(DateTime, nullable=True)  # Null for lifetime
-    
-    # Stats
-    documents_generated = Column(Integer, default=0)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    last_login = Column(DateTime, nullable=True)
-    is_active = Column(Boolean, default=True)
-    
-    # Relationships
-    documents = relationship("Document", back_populates="user")
-    
-    def has_access(self):
-        """Check if user has valid subscription"""
-        if not self.is_active:
-            return False
-        if self.role == UserRole.ADMIN:
-            return True
-        if self.subscription_type == SubscriptionType.NONE:
-            return False
-        if self.subscription_type == SubscriptionType.LIFETIME:
-            return True
-        if self.subscription_type == SubscriptionType.MONTHLY:
-            if self.subscription_expires and self.subscription_expires > datetime.utcnow():
-                return True
-        return False
-    
-    def days_remaining(self):
-        """Get days remaining in subscription"""
-        if self.subscription_type == SubscriptionType.LIFETIME:
-            return -1  # Unlimited
-        if self.subscription_type == SubscriptionType.NONE:
-            return 0
-        if self.subscription_expires:
-            delta = self.subscription_expires - datetime.utcnow()
-            return max(0, delta.days)
-        return 0
+# MongoDB Client
+client = None
+db = None
 
-class Document(Base):
-    __tablename__ = "documents"
+async def init_db():
+    global client, db
+    client = AsyncIOMotorClient(MONGO_URL)
+    db = client[DB_NAME]
     
-    id = Column(String, primary_key=True)
-    user_id = Column(String, ForeignKey("users.id"), nullable=False)
+    # Create indexes
+    await db.users.create_index("email", unique=True)
+    await db.users.create_index("google_id", unique=True, sparse=True)
+    await db.documents.create_index("user_id")
+    await db.documents.create_index("created_at")
     
-    # Document data
-    template = Column(String, nullable=False)
-    name = Column(String, nullable=False)
-    email = Column(String, nullable=False)
-    order_number = Column(String, nullable=False)
-    date = Column(String, nullable=False)
-    amount = Column(Float, nullable=False)
-    additional_info = Column(Text, nullable=True)
-    
-    # Meta
-    created_at = Column(DateTime, default=datetime.utcnow)
-    email_sent = Column(Boolean, default=False)
-    
-    # Relationships
-    user = relationship("User", back_populates="documents")
+    print(f"✅ MongoDB connected to {MONGO_URL}/{DB_NAME}")
 
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    return db
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+# Helper functions for User model
+def user_has_access(user: dict) -> bool:
+    """Check if user has valid subscription"""
+    if not user.get("is_active", True):
+        return False
+    if user.get("role") == UserRole.ADMIN.value:
+        return True
+    subscription_type = user.get("subscription_type", SubscriptionType.NONE.value)
+    if subscription_type == SubscriptionType.NONE.value:
+        return False
+    if subscription_type == SubscriptionType.LIFETIME.value:
+        return True
+    if subscription_type == SubscriptionType.MONTHLY.value:
+        expires = user.get("subscription_expires")
+        if expires and expires > datetime.utcnow():
+            return True
+    return False
+
+def user_days_remaining(user: dict) -> int:
+    """Get days remaining in subscription"""
+    subscription_type = user.get("subscription_type", SubscriptionType.NONE.value)
+    if subscription_type == SubscriptionType.LIFETIME.value:
+        return -1  # Unlimited
+    if subscription_type == SubscriptionType.NONE.value:
+        return 0
+    expires = user.get("subscription_expires")
+    if expires:
+        delta = expires - datetime.utcnow()
+        return max(0, delta.days)
+    return 0
+
+def create_user_dict(
+    user_id: str,
+    email: str,
+    hashed_password: str = None,
+    name: str = None,
+    google_id: str = None,
+    is_google_user: bool = False,
+    role: str = UserRole.USER.value,
+    subscription_type: str = SubscriptionType.NONE.value
+) -> dict:
+    """Create user dictionary for MongoDB"""
+    return {
+        "id": user_id,
+        "email": email,
+        "hashed_password": hashed_password,
+        "name": name,
+        "is_google_user": is_google_user,
+        "google_id": google_id,
+        "role": role,
+        "subscription_type": subscription_type,
+        "subscription_expires": None,
+        "documents_generated": 0,
+        "created_at": datetime.utcnow(),
+        "last_login": None,
+        "is_active": True
+    }
+
+def create_document_dict(
+    doc_id: str,
+    user_id: str,
+    template: str,
+    name: str,
+    email: str,
+    order_number: str,
+    date: str,
+    amount: float,
+    additional_info: str = None,
+    email_sent: bool = False
+) -> dict:
+    """Create document dictionary for MongoDB"""
+    return {
+        "id": doc_id,
+        "user_id": user_id,
+        "template": template,
+        "name": name,
+        "email": email,
+        "order_number": order_number,
+        "date": date,
+        "amount": amount,
+        "additional_info": additional_info,
+        "created_at": datetime.utcnow(),
+        "email_sent": email_sent
+    }
