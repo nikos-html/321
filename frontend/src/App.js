@@ -516,19 +516,19 @@ const Generator = ({ showToast }) => {
       {/* Form */}
       <div className="generator-form glass">
         <div className="form-header">
-          <h3>📝 Dane dokumentu</h3>
+          <h3>// INPUT DATA</h3>
           <div className="user-stats">
             <span className="stat-pill">
-              {user.subscription_type === 'lifetime' ? '♾️ Lifetime' : `📅 ${user.days_remaining} dni`}
+              {user.subscription_type === 'lifetime' ? '∞ LIFETIME' : `⏱ ${user.days_remaining}d`}
             </span>
-            <span className="stat-pill">📄 {user.documents_generated} dok.</span>
+            <span className="stat-pill">📊 {user.documents_generated}</span>
           </div>
         </div>
 
         <div className="form-body">
           {/* Template selector */}
           <div className="template-selector">
-            <label className="input-label">Wybierz szablon</label>
+            <label className="input-label">Select Template</label>
             <div className="template-options">
               {templates.map(t => (
                 <button
@@ -546,21 +546,21 @@ const Generator = ({ showToast }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label className="input-label">Imię / Nazwa *</label>
+              <label className="input-label">Name / ID *</label>
               <input
                 type="text"
                 className={`input-field ${errors.name ? 'error' : ''}`}
-                placeholder="Jan Kowalski"
+                placeholder="John Doe"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label className="input-label">Email odbiorcy *</label>
+              <label className="input-label">Target Email *</label>
               <input
                 type="email"
                 className={`input-field ${errors.email ? 'error' : ''}`}
-                placeholder="jan@example.com"
+                placeholder="target@domain.com"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
@@ -569,7 +569,7 @@ const Generator = ({ showToast }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label className="input-label">Numer zamówienia *</label>
+              <label className="input-label">Order ID *</label>
               <input
                 type="text"
                 className={`input-field ${errors.order_number ? 'error' : ''}`}
@@ -579,7 +579,7 @@ const Generator = ({ showToast }) => {
               />
             </div>
             <div className="form-group">
-              <label className="input-label">Data *</label>
+              <label className="input-label">Timestamp *</label>
               <input
                 type="date"
                 className={`input-field ${errors.date ? 'error' : ''}`}
@@ -590,7 +590,7 @@ const Generator = ({ showToast }) => {
           </div>
 
           <div className="form-group">
-            <label className="input-label">Kwota (PLN) *</label>
+            <label className="input-label">Amount (PLN) *</label>
             <input
               type="number"
               className={`input-field ${errors.amount ? 'error' : ''}`}
@@ -602,10 +602,10 @@ const Generator = ({ showToast }) => {
           </div>
 
           <div className="form-group">
-            <label className="input-label">Dodatkowe informacje</label>
+            <label className="input-label">Additional Data</label>
             <textarea
               className="input-field"
-              placeholder="Opcjonalne uwagi..."
+              placeholder="Optional metadata..."
               rows="3"
               value={formData.additional_info}
               onChange={(e) => setFormData({ ...formData, additional_info: e.target.value })}
@@ -614,10 +614,10 @@ const Generator = ({ showToast }) => {
 
           <div className="form-actions">
             <button className="btn-secondary" onClick={() => handleGenerate(true)} disabled={previewLoading}>
-              {previewLoading ? <span className="loader-small"></span> : '👁️'} Podgląd
+              {previewLoading ? <span className="loader-small"></span> : '◉'} PREVIEW
             </button>
             <button className="btn-primary" onClick={() => handleGenerate(false)} disabled={loading}>
-              {loading ? <span className="loader-small"></span> : '📨'} Generuj i wyślij
+              {loading ? <span className="loader-small"></span> : '▶'} EXECUTE
             </button>
           </div>
         </div>
