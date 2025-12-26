@@ -408,14 +408,33 @@ const AdminPanel = ({ showToast }) => {
 
 const Generator = ({ showToast }) => {
   const { user, token } = useAuth();
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
+    template: '',
     email: '',
-    order_number: '',
+    brand: '',
+    product: '',
+    price: '',
+    size: '',
+    style_id: '',
+    colour: '',
+    taxes: '',
+    reference: '',
+    first_name: '',
+    whole_name: '',
+    quantity: '1',
+    currency: 'USD',
+    phone_number: '',
+    card_end: '',
+    estimated_delivery: '',
+    image_url: '',
     date: new Date().toISOString().split('T')[0],
-    amount: '',
-    additional_info: '',
-    template: 'receipt'
+    full_name: '',
+    street: '',
+    city: '',
+    postal_code: '',
+    country: ''
   });
   const [loading, setLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -423,20 +442,61 @@ const Generator = ({ showToast }) => {
   const [errors, setErrors] = useState({});
   const previewRef = useRef(null);
 
-  const templates = [
-    { id: 'receipt', name: 'Receipt', icon: '📋' },
-    { id: 'invoice', name: 'Invoice', icon: '📄' },
-    { id: 'confirmation', name: 'Confirm', icon: '✓' }
-  ];
+  // Fetch templates on mount
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/templates`);
+      if (res.ok) {
+        const data = await res.json();
+        setTemplates(data.templates || []);
+        if (data.templates?.length > 0) {
+          setFormData(prev => ({ ...prev, template: data.templates[0].id }));
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch templates:', e);
+    }
+    setTemplatesLoading(false);
+  };
+
+  const selectedTemplate = templates.find(t => t.id === formData.template);
+
+  // Field configuration for dynamic rendering
+  const fieldConfig = {
+    brand: { label: 'Marka *', placeholder: 'Nike, Supreme, etc.', required: true },
+    product: { label: 'Produkt *', placeholder: 'Nazwa produktu', required: true },
+    price: { label: 'Cena *', placeholder: '199.99', type: 'number', required: true },
+    size: { label: 'Rozmiar', placeholder: 'M, L, 42, etc.' },
+    style_id: { label: 'Style ID', placeholder: 'ABC-123' },
+    colour: { label: 'Kolor', placeholder: 'Czarny, Biały, etc.' },
+    taxes: { label: 'Podatek', placeholder: '0.00', type: 'number' },
+    reference: { label: 'Referencja', placeholder: 'REF-001' },
+    first_name: { label: 'Imię', placeholder: 'Jan' },
+    whole_name: { label: 'Pełne imię i nazwisko', placeholder: 'Jan Kowalski' },
+    quantity: { label: 'Ilość', placeholder: '1', type: 'number' },
+    currency: { label: 'Waluta', placeholder: 'USD, PLN, EUR' },
+    phone_number: { label: 'Numer telefonu', placeholder: '+48 123 456 789' },
+    card_end: { label: 'Końcówka karty', placeholder: '4242' },
+    estimated_delivery: { label: 'Szacowana dostawa', placeholder: '3-5 dni roboczych' },
+    image_url: { label: 'URL obrazka *', placeholder: 'https://...', required: true },
+    date: { label: 'Data *', type: 'date', required: true },
+    shipping_address: { label: 'Adres dostawy', placeholder: 'Pełny adres', isAddress: true }
+  };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = 'Wymagane';
+    if (!formData.template) newErrors.template = 'Wybierz szablon';
     if (!formData.email.trim()) newErrors.email = 'Wymagane';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Nieprawidłowy email';
-    if (!formData.order_number.trim()) newErrors.order_number = 'Wymagane';
+    if (!formData.brand.trim()) newErrors.brand = 'Wymagane';
+    if (!formData.product.trim()) newErrors.product = 'Wymagane';
+    if (!formData.price || parseFloat(formData.price) <= 0) newErrors.price = 'Podaj cenę';
+    if (!formData.image_url.trim()) newErrors.image_url = 'Wymagane';
     if (!formData.date) newErrors.date = 'Wymagane';
-    if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = 'Podaj kwotę';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -450,13 +510,20 @@ const Generator = ({ showToast }) => {
     preview ? setPreviewLoading(true) : setLoading(true);
 
     try {
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price) || 0,
+        taxes: parseFloat(formData.taxes) || 0,
+        quantity: parseInt(formData.quantity) || 1
+      };
+
       const res = await fetch(`${BACKEND_URL}/api/${preview ? 'preview' : 'generate'}`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ ...formData, amount: parseFloat(formData.amount) })
+        body: JSON.stringify(payload)
       });
 
       const data = await res.json();
@@ -486,11 +553,32 @@ const Generator = ({ showToast }) => {
   };
 
   const handleReset = () => {
-    setFormData({
-      name: '', email: '', order_number: '',
+    setFormData(prev => ({
+      template: prev.template,
+      email: '',
+      brand: '',
+      product: '',
+      price: '',
+      size: '',
+      style_id: '',
+      colour: '',
+      taxes: '',
+      reference: '',
+      first_name: '',
+      whole_name: '',
+      quantity: '1',
+      currency: 'USD',
+      phone_number: '',
+      card_end: '',
+      estimated_delivery: '',
+      image_url: '',
       date: new Date().toISOString().split('T')[0],
-      amount: '', additional_info: '', template: 'receipt'
-    });
+      full_name: '',
+      street: '',
+      city: '',
+      postal_code: '',
+      country: ''
+    }));
     setGeneratedDoc(null);
     setErrors({});
   };
@@ -510,6 +598,13 @@ const Generator = ({ showToast }) => {
     );
   }
 
+  if (templatesLoading) {
+    return <Loader />;
+  }
+
+  // Get fields for selected template
+  const templateFields = selectedTemplate?.fields || [];
+
   return (
     <div className="generator-grid">
       {/* Form */}
@@ -525,10 +620,10 @@ const Generator = ({ showToast }) => {
         </div>
 
         <div className="form-body">
-          {/* Template selector */}
+          {/* Template selector - Grid */}
           <div className="template-selector">
-            <label className="input-label">Select Template</label>
-            <div className="template-options">
+            <label className="input-label">Wybierz szablon ({templates.length} dostępnych)</label>
+            <div className="template-grid">
               {templates.map(t => (
                 <button
                   key={t.id}
@@ -543,42 +638,56 @@ const Generator = ({ showToast }) => {
             </div>
           </div>
 
+          {/* Email - always required */}
+          <div className="form-group">
+            <label className="input-label">Email odbiorcy *</label>
+            <input
+              type="email"
+              className={`input-field ${errors.email ? 'error' : ''}`}
+              placeholder="target@domain.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+          </div>
+
+          {/* Dynamic fields based on template */}
           <div className="form-row">
             <div className="form-group">
-              <label className="input-label">Name / ID *</label>
+              <label className="input-label">{fieldConfig.brand.label}</label>
               <input
                 type="text"
-                className={`input-field ${errors.name ? 'error' : ''}`}
-                placeholder="John Doe"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className={`input-field ${errors.brand ? 'error' : ''}`}
+                placeholder={fieldConfig.brand.placeholder}
+                value={formData.brand}
+                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label className="input-label">Target Email *</label>
+              <label className="input-label">{fieldConfig.product.label}</label>
               <input
-                type="email"
-                className={`input-field ${errors.email ? 'error' : ''}`}
-                placeholder="target@domain.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                type="text"
+                className={`input-field ${errors.product ? 'error' : ''}`}
+                placeholder={fieldConfig.product.placeholder}
+                value={formData.product}
+                onChange={(e) => setFormData({ ...formData, product: e.target.value })}
               />
             </div>
           </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label className="input-label">Order ID *</label>
+              <label className="input-label">{fieldConfig.price.label}</label>
               <input
-                type="text"
-                className={`input-field ${errors.order_number ? 'error' : ''}`}
-                placeholder="ORD-2024-001"
-                value={formData.order_number}
-                onChange={(e) => setFormData({ ...formData, order_number: e.target.value })}
+                type="number"
+                step="0.01"
+                className={`input-field ${errors.price ? 'error' : ''}`}
+                placeholder={fieldConfig.price.placeholder}
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
               />
             </div>
             <div className="form-group">
-              <label className="input-label">Timestamp *</label>
+              <label className="input-label">{fieldConfig.date.label}</label>
               <input
                 type="date"
                 className={`input-field ${errors.date ? 'error' : ''}`}
@@ -588,27 +697,242 @@ const Generator = ({ showToast }) => {
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="input-label">Amount (PLN) *</label>
-            <input
-              type="number"
-              className={`input-field ${errors.amount ? 'error' : ''}`}
-              placeholder="199.99"
-              step="0.01"
-              value={formData.amount}
-              onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-            />
-          </div>
+          {/* Conditional fields based on template */}
+          {templateFields.includes('size') && (
+            <div className="form-row">
+              <div className="form-group">
+                <label className="input-label">{fieldConfig.size.label}</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder={fieldConfig.size.placeholder}
+                  value={formData.size}
+                  onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                />
+              </div>
+              {templateFields.includes('colour') && (
+                <div className="form-group">
+                  <label className="input-label">{fieldConfig.colour.label}</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={fieldConfig.colour.placeholder}
+                    value={formData.colour}
+                    onChange={(e) => setFormData({ ...formData, colour: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
+          {templateFields.includes('style_id') && (
+            <div className="form-group">
+              <label className="input-label">{fieldConfig.style_id.label}</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder={fieldConfig.style_id.placeholder}
+                value={formData.style_id}
+                onChange={(e) => setFormData({ ...formData, style_id: e.target.value })}
+              />
+            </div>
+          )}
+
+          {templateFields.includes('taxes') && (
+            <div className="form-row">
+              <div className="form-group">
+                <label className="input-label">{fieldConfig.taxes.label}</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="input-field"
+                  placeholder={fieldConfig.taxes.placeholder}
+                  value={formData.taxes}
+                  onChange={(e) => setFormData({ ...formData, taxes: e.target.value })}
+                />
+              </div>
+              {templateFields.includes('currency') && (
+                <div className="form-group">
+                  <label className="input-label">{fieldConfig.currency.label}</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={fieldConfig.currency.placeholder}
+                    value={formData.currency}
+                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {templateFields.includes('reference') && (
+            <div className="form-group">
+              <label className="input-label">{fieldConfig.reference.label}</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder={fieldConfig.reference.placeholder}
+                value={formData.reference}
+                onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
+              />
+            </div>
+          )}
+
+          {(templateFields.includes('first_name') || templateFields.includes('whole_name')) && (
+            <div className="form-row">
+              {templateFields.includes('first_name') && (
+                <div className="form-group">
+                  <label className="input-label">{fieldConfig.first_name.label}</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={fieldConfig.first_name.placeholder}
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                  />
+                </div>
+              )}
+              {templateFields.includes('whole_name') && (
+                <div className="form-group">
+                  <label className="input-label">{fieldConfig.whole_name.label}</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={fieldConfig.whole_name.placeholder}
+                    value={formData.whole_name}
+                    onChange={(e) => setFormData({ ...formData, whole_name: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {templateFields.includes('quantity') && (
+            <div className="form-group">
+              <label className="input-label">{fieldConfig.quantity.label}</label>
+              <input
+                type="number"
+                min="1"
+                className="input-field"
+                placeholder={fieldConfig.quantity.placeholder}
+                value={formData.quantity}
+                onChange={(e) => setFormData({ ...formData, quantity: e.target.value })}
+              />
+            </div>
+          )}
+
+          {templateFields.includes('phone_number') && (
+            <div className="form-group">
+              <label className="input-label">{fieldConfig.phone_number.label}</label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder={fieldConfig.phone_number.placeholder}
+                value={formData.phone_number}
+                onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+              />
+            </div>
+          )}
+
+          {(templateFields.includes('card_end') || templateFields.includes('estimated_delivery')) && (
+            <div className="form-row">
+              {templateFields.includes('card_end') && (
+                <div className="form-group">
+                  <label className="input-label">{fieldConfig.card_end.label}</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={fieldConfig.card_end.placeholder}
+                    value={formData.card_end}
+                    onChange={(e) => setFormData({ ...formData, card_end: e.target.value })}
+                  />
+                </div>
+              )}
+              {templateFields.includes('estimated_delivery') && (
+                <div className="form-group">
+                  <label className="input-label">{fieldConfig.estimated_delivery.label}</label>
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder={fieldConfig.estimated_delivery.placeholder}
+                    value={formData.estimated_delivery}
+                    onChange={(e) => setFormData({ ...formData, estimated_delivery: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Shipping address for templates that need it */}
+          {templateFields.includes('shipping_address') && (
+            <div className="address-section">
+              <label className="input-label section-label">📦 Adres dostawy</label>
+              <div className="form-group">
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Imię i nazwisko"
+                  value={formData.full_name}
+                  onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                />
+              </div>
+              <div className="form-group">
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Ulica i numer"
+                  value={formData.street}
+                  onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Miasto"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <input
+                    type="text"
+                    className="input-field"
+                    placeholder="Kod pocztowy"
+                    value={formData.postal_code}
+                    onChange={(e) => setFormData({ ...formData, postal_code: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Kraj"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Image URL - always required */}
           <div className="form-group">
-            <label className="input-label">Additional Data</label>
-            <textarea
-              className="input-field"
-              placeholder="Optional metadata..."
-              rows="3"
-              value={formData.additional_info}
-              onChange={(e) => setFormData({ ...formData, additional_info: e.target.value })}
+            <label className="input-label">{fieldConfig.image_url.label}</label>
+            <input
+              type="url"
+              className={`input-field ${errors.image_url ? 'error' : ''}`}
+              placeholder={fieldConfig.image_url.placeholder}
+              value={formData.image_url}
+              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
             />
+            {formData.image_url && (
+              <div className="image-preview-small">
+                <img src={formData.image_url} alt="Preview" onError={(e) => e.target.style.display='none'} />
+              </div>
+            )}
           </div>
 
           <div className="form-actions">
