@@ -217,7 +217,7 @@ const AdminPanel = ({ showToast }) => {
       if (usersRes.ok) setUsers((await usersRes.json()).users);
       if (statsRes.ok) setStats(await statsRes.json());
     } catch (e) {
-      showToast('Błąd ładowania danych', 'error');
+      showToast('Connection error', 'error');
     }
     setLoading(false);
   };
@@ -231,19 +231,19 @@ const AdminPanel = ({ showToast }) => {
       });
       
       if (res.ok) {
-        showToast('Dostęp nadany!', 'success');
+        showToast('Access granted successfully', 'success');
         fetchData();
         setGrantModal(null);
       } else {
-        showToast('Błąd', 'error');
+        showToast('Operation failed', 'error');
       }
     } catch (e) {
-      showToast('Błąd połączenia', 'error');
+      showToast('Connection error', 'error');
     }
   };
 
   const revokeAccess = async (userId) => {
-    if (!window.confirm('Czy na pewno chcesz odebrać dostęp?')) return;
+    if (!window.confirm('Revoke access for this user?')) return;
     
     try {
       const res = await fetch(`${BACKEND_URL}/api/admin/revoke-access/${userId}`, {
@@ -252,11 +252,11 @@ const AdminPanel = ({ showToast }) => {
       });
       
       if (res.ok) {
-        showToast('Dostęp odebrany', 'success');
+        showToast('Access revoked', 'success');
         fetchData();
       }
     } catch (e) {
-      showToast('Błąd', 'error');
+      showToast('Error', 'error');
     }
   };
 
@@ -269,11 +269,11 @@ const AdminPanel = ({ showToast }) => {
       });
       
       if (res.ok) {
-        showToast(isActive ? 'Użytkownik zablokowany' : 'Użytkownik odblokowany', 'success');
+        showToast(isActive ? 'User blocked' : 'User unblocked', 'success');
         fetchData();
       }
     } catch (e) {
-      showToast('Błąd', 'error');
+      showToast('Error', 'error');
     }
   };
 
@@ -281,7 +281,7 @@ const AdminPanel = ({ showToast }) => {
 
   return (
     <div className="admin-panel">
-      <h2 className="admin-title">🛠️ Panel Administratora</h2>
+      <h2 className="admin-title">// ADMIN CONSOLE</h2>
 
       {/* Stats */}
       {stats && (
@@ -290,21 +290,21 @@ const AdminPanel = ({ showToast }) => {
             <div className="stat-icon">👥</div>
             <div className="stat-info">
               <div className="stat-value">{stats.total_users}</div>
-              <div className="stat-label">Użytkowników</div>
+              <div className="stat-label">Total Users</div>
             </div>
           </div>
           <div className="stat-card glass">
-            <div className="stat-icon">✅</div>
+            <div className="stat-icon">✓</div>
             <div className="stat-info">
               <div className="stat-value">{stats.active_subscriptions}</div>
-              <div className="stat-label">Aktywnych subskrypcji</div>
+              <div className="stat-label">Active Access</div>
             </div>
           </div>
           <div className="stat-card glass">
             <div className="stat-icon">📄</div>
             <div className="stat-info">
               <div className="stat-value">{stats.total_documents}</div>
-              <div className="stat-label">Dokumentów</div>
+              <div className="stat-label">Documents</div>
             </div>
           </div>
         </div>
@@ -312,55 +312,55 @@ const AdminPanel = ({ showToast }) => {
 
       {/* Users table */}
       <div className="admin-section glass">
-        <h3>👥 Użytkownicy</h3>
+        <h3>// USER DATABASE</h3>
         <div className="users-table">
           <div className="table-header">
             <span>Email</span>
-            <span>Subskrypcja</span>
-            <span>Dni</span>
-            <span>Dokumenty</span>
+            <span>Access</span>
+            <span>Days</span>
+            <span>Docs</span>
             <span>Status</span>
-            <span>Akcje</span>
+            <span>Actions</span>
           </div>
           {users.map(user => (
             <div key={user.id} className={`table-row ${!user.is_active ? 'inactive' : ''}`}>
               <span className="user-email">
                 {user.email}
-                {user.role === 'admin' && <span className="admin-badge">ADMIN</span>}
+                {user.role === 'admin' && <span className="admin-badge">ROOT</span>}
               </span>
               <span className={`sub-badge sub-${user.subscription_type}`}>
-                {user.subscription_type === 'lifetime' ? '♾️ Lifetime' : 
-                 user.subscription_type === 'monthly' ? '📅 30 dni' : '❌ Brak'}
+                {user.subscription_type === 'lifetime' ? '∞ LIFETIME' : 
+                 user.subscription_type === 'monthly' ? '⏱ 30 DAYS' : '✗ NONE'}
               </span>
               <span>{user.days_remaining === -1 ? '∞' : user.days_remaining}</span>
               <span>{user.documents_generated}</span>
               <span className={`status-badge ${user.has_access ? 'active' : 'no-access'}`}>
-                {user.has_access ? '✅ Aktywny' : '⛔ Brak dostępu'}
+                {user.has_access ? '● ACTIVE' : '○ DENIED'}
               </span>
               <span className="actions">
                 <button 
                   className="btn-small btn-grant"
                   onClick={() => setGrantModal(user)}
-                  title="Nadaj dostęp"
+                  title="Grant access"
                 >
-                  🎁
+                  +
                 </button>
                 {user.has_access && user.role !== 'admin' && (
                   <button 
                     className="btn-small btn-revoke"
                     onClick={() => revokeAccess(user.id)}
-                    title="Odbierz dostęp"
+                    title="Revoke access"
                   >
-                    🚫
+                    ✗
                   </button>
                 )}
                 {user.role !== 'admin' && (
                   <button 
                     className="btn-small btn-toggle"
                     onClick={() => toggleUserActive(user.id, user.is_active)}
-                    title={user.is_active ? 'Zablokuj' : 'Odblokuj'}
+                    title={user.is_active ? 'Block' : 'Unblock'}
                   >
-                    {user.is_active ? '🔒' : '🔓'}
+                    {user.is_active ? '◉' : '○'}
                   </button>
                 )}
               </span>
@@ -373,30 +373,30 @@ const AdminPanel = ({ showToast }) => {
       {grantModal && (
         <div className="modal-overlay" onClick={() => setGrantModal(null)}>
           <div className="modal glass" onClick={e => e.stopPropagation()}>
-            <h3>🎁 Nadaj dostęp</h3>
-            <p>Użytkownik: <strong>{grantModal.email}</strong></p>
+            <h3>// GRANT ACCESS</h3>
+            <p>Target: <strong>{grantModal.email}</strong></p>
             
             <div className="grant-options">
               <button 
                 className="grant-option"
                 onClick={() => grantAccess(grantModal.id, 'monthly', 30)}
               >
-                <span className="grant-icon">📅</span>
-                <span className="grant-title">30 dni</span>
-                <span className="grant-desc">Dostęp na miesiąc</span>
+                <span className="grant-icon">⏱</span>
+                <span className="grant-title">30 Days</span>
+                <span className="grant-desc">Temporary access</span>
               </button>
               <button 
                 className="grant-option lifetime"
                 onClick={() => grantAccess(grantModal.id, 'lifetime')}
               >
-                <span className="grant-icon">♾️</span>
+                <span className="grant-icon">∞</span>
                 <span className="grant-title">Lifetime</span>
-                <span className="grant-desc">Dostęp na zawsze</span>
+                <span className="grant-desc">Permanent access</span>
               </button>
             </div>
 
             <button className="btn-secondary btn-full" onClick={() => setGrantModal(null)}>
-              Anuluj
+              [ CANCEL ]
             </button>
           </div>
         </div>
