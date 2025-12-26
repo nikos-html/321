@@ -4,12 +4,11 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
 import os
 import httpx
 import uuid
 
-from database import get_db, User, UserRole
+from database import get_db, UserRole, user_has_access
 
 # Config
 SECRET_KEY = os.getenv("JWT_SECRET", "your-super-secret-key-change-in-production-123456")
@@ -46,9 +45,8 @@ def decode_token(token: str) -> Optional[dict]:
         return None
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> User:
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> dict:
     if not credentials:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -71,14 +69,16 @@ async def get_current_user(
             detail="Nieprawidłowy token"
         )
     
-    user = db.query(User).filter(User.id == user_id).first()
+    db = get_db()
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Użytkownik nie istnieje"
         )
     
-    if not user.is_active:
+    if not user.get("is_active", True):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Konto zostało dezaktywowane"
@@ -87,22 +87,21 @@ async def get_current_user(
     return user
 
 async def get_current_user_optional(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
-) -> Optional[User]:
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> Optional[dict]:
     """Get current user if logged in, otherwise return None"""
     if not credentials:
         return None
     
     try:
-        return await get_current_user(credentials, db)
+        return await get_current_user(credentials)
     except HTTPException:
         return None
 
 async def get_admin_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    if current_user.role != UserRole.ADMIN:
+    current_user: dict = Depends(get_current_user)
+) -> dict:
+    if current_user.get("role") != UserRole.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Brak uprawnień administratora"
@@ -110,9 +109,9 @@ async def get_admin_user(
     return current_user
 
 async def get_user_with_access(
-    current_user: User = Depends(get_current_user)
-) -> User:
-    if not current_user.has_access():
+    current_user: dict = Depends(get_current_user)
+) -> dict:
+    if not user_has_access(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Brak aktywnej subskrypcji. Skontaktuj się z administratorem."
@@ -133,27 +132,29 @@ async def verify_google_token(token: str) -> Optional[dict]:
         print(f"Google verification error: {e}")
     return None
 
-def create_user(
-    db: Session,
+async def create_user_in_db(
     email: str,
     password: Optional[str] = None,
     name: Optional[str] = None,
     google_id: Optional[str] = None,
     is_google_user: bool = False
-) -> User:
+) -> dict:
+    from database import get_db, create_user_dict
+    
+    db = get_db()
     user_id = str(uuid.uuid4())
     
-    user = User(
-        id=user_id,
+    user = create_user_dict(
+        user_id=user_id,
         email=email,
-        name=name,
         hashed_password=get_password_hash(password) if password else None,
+        name=name,
         google_id=google_id,
-        is_google_user=is_google_user,
-        created_at=datetime.utcnow()
+        is_google_user=is_google_user
     )
     
-    db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.users.insert_one(user)
+    
+    # Return without _id
+    user.pop("_id", None)
     return user
