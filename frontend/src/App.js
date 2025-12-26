@@ -837,11 +837,11 @@ const AppContent = ({ toast, showToast, page, setPage, generatorRef }) => {
             <div className="container">
               <div className="footer-content">
                 <div className="footer-logo">
-                  <span className="logo-icon">📄</span>
-                  <span className="logo-text">DocGen</span>
+                  <span className="logo-icon">🔐</span>
+                  <span className="logo-text">DOCGEN</span>
                 </div>
-                <p className="footer-text">Generator profesjonalnych dokumentów z automatyczną wysyłką email.</p>
-                <div className="footer-copy">© {new Date().getFullYear()} DocGen. Wszystkie prawa zastrzeżone.</div>
+                <p className="footer-text">Secure document generation system with encrypted email transmission.</p>
+                <div className="footer-copy">© {new Date().getFullYear()} DOCGEN SYSTEMS // ALL RIGHTS RESERVED</div>
               </div>
             </div>
           </footer>
