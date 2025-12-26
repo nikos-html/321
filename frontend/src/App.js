@@ -500,12 +500,12 @@ const Generator = ({ showToast }) => {
   if (!user?.has_access) {
     return (
       <div className="no-access-card glass">
-        <div className="no-access-icon">🔒</div>
-        <h3>Brak aktywnej subskrypcji</h3>
-        <p>Aby generować dokumenty, potrzebujesz aktywnej subskrypcji.</p>
-        <p>Skontaktuj się z administratorem, aby uzyskać dostęp.</p>
+        <div className="no-access-icon">⛔</div>
+        <h3>ACCESS DENIED</h3>
+        <p>Authorization required to access document generation.</p>
+        <p>Contact system administrator to obtain access credentials.</p>
         {user?.subscription_type === 'monthly' && user?.days_remaining === 0 && (
-          <p className="expired-text">Twoja subskrypcja wygasła.</p>
+          <p className="expired-text">// ACCESS TOKEN EXPIRED</p>
         )}
       </div>
     );
