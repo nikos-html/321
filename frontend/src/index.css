@@ -361,3 +361,111 @@ textarea.input-field {
   min-height: 100px;
   resize: vertical;
 }
+
+
+
+/* Template Grid - 15 templates */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.template-selector .template-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 8px;
+}
+
+.template-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 8px;
+  background: var(--cyber-darker);
+  border: 1px solid var(--cyber-border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 70px;
+}
+
+.template-option:hover {
+  border-color: var(--cyber-green-dim);
+  background: rgba(0, 255, 136, 0.05);
+}
+
+.template-option.active {
+  border-color: var(--cyber-green);
+  background: rgba(0, 255, 136, 0.1);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+.template-option .template-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.template-option .template-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.template-option.active .template-name {
+  color: var(--cyber-green);
+}
+
+/* Image preview small */
+.image-preview-small {
+  margin-top: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--cyber-border);
+  max-height: 120px;
+}
+
+.image-preview-small img {
+  width: 100%;
+  max-height: 120px;
+  object-fit: contain;
+  display: block;
+  background: #fff;
+}
+
+/* Address section */
+.address-section {
+  background: rgba(0, 255, 136, 0.03);
+  border: 1px solid var(--cyber-border);
+  border-radius: 6px;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.address-section .section-label {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--cyber-green);
+}
+
+/* Form row responsive */
+@media (max-width: 640px) {
+  .template-grid,
+  .template-selector .template-options {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .form-row {
+    flex-direction: column;
+  }
+  
+  .form-row .form-group {
+    width: 100%;
+  }
+}
