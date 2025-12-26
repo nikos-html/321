@@ -806,26 +806,27 @@ const AppContent = ({ toast, showToast, page, setPage, generatorRef }) => {
           <section className="how-it-works">
             <div className="container">
               <div className="section-header">
-                <h2 className="section-title">🎯 Jak to działa?</h2>
+                <h2 className="section-title">// PROTOCOL</h2>
+                <p className="section-subtitle">System operation sequence</p>
               </div>
               <div className="steps-grid">
                 <div className="step-card glass">
-                  <div className="step-number">1</div>
-                  <div className="step-icon">✍️</div>
-                  <h3>Wypełnij formularz</h3>
-                  <p>Wprowadź dane: imię, email, numer zamówienia, datę i kwotę.</p>
+                  <div className="step-number">01</div>
+                  <div className="step-icon">⌨️</div>
+                  <h3>Input Data</h3>
+                  <p>Enter recipient details, order ID, timestamp and amount into the secure form.</p>
                 </div>
                 <div className="step-card glass">
-                  <div className="step-number">2</div>
-                  <div className="step-icon">⚡</div>
-                  <h3>Generuj dokument</h3>
-                  <p>Kliknij przycisk "Generuj i wyślij". System utworzy elegancki dokument.</p>
+                  <div className="step-number">02</div>
+                  <div className="step-icon">⚙️</div>
+                  <h3>Process</h3>
+                  <p>System generates encrypted document using selected template protocol.</p>
                 </div>
                 <div className="step-card glass">
-                  <div className="step-number">3</div>
-                  <div className="step-icon">📧</div>
-                  <h3>Automatyczna wysyłka</h3>
-                  <p>Dokument zostanie automatycznie wysłany na podany email.</p>
+                  <div className="step-number">03</div>
+                  <div className="step-icon">📡</div>
+                  <h3>Transmit</h3>
+                  <p>Document automatically transmitted via secure SMTP to target address.</p>
                 </div>
               </div>
             </div>
