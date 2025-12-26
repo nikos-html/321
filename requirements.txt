@@ -1,0 +1,2 @@
+# Backend requirements - install from backend folder
+-r backend/requirements.txt
