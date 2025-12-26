@@ -628,11 +628,11 @@ const Generator = ({ showToast }) => {
         {generatedDoc ? (
           <div className="document-card animate-slide-up">
             <div className="document-header">
-              <div className="document-title">📄 Wygenerowany dokument</div>
+              <div className="document-title">◉ OUTPUT DOCUMENT</div>
               <div className="document-id">ID: {generatedDoc.document_id}</div>
             </div>
             {generatedDoc.email_sent && (
-              <div className="email-sent-badge">✅ Wysłano na email</div>
+              <div className="email-sent-badge">✓ TRANSMISSION COMPLETE</div>
             )}
             <div className="document-preview">
               <iframe srcDoc={generatedDoc.html_content} title="Preview" sandbox="allow-same-origin" />
@@ -642,16 +642,16 @@ const Generator = ({ showToast }) => {
                 const temp = document.createElement('div');
                 temp.innerHTML = generatedDoc.html_content;
                 navigator.clipboard.writeText(temp.textContent);
-                showToast('Skopiowano!', 'success');
-              }}>📋 Kopiuj</button>
-              <button className="btn-secondary" onClick={handleReset}>🔄 Nowy</button>
+                showToast('Data copied to clipboard', 'success');
+              }}>[ COPY ]</button>
+              <button className="btn-secondary" onClick={handleReset}>[ RESET ]</button>
             </div>
           </div>
         ) : (
           <div className="preview-placeholder glass">
-            <div className="placeholder-icon animate-float">📄</div>
-            <h3>Podgląd dokumentu</h3>
-            <p>Wypełnij formularz i kliknij "Podgląd" lub "Generuj i wyślij"</p>
+            <div className="placeholder-icon animate-float">◎</div>
+            <h3>OUTPUT AREA</h3>
+            <p>Awaiting document generation request...</p>
           </div>
         )}
       </div>
