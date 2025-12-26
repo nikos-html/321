@@ -756,20 +756,37 @@ const AppContent = ({ toast, showToast, page, setPage, generatorRef }) => {
           <section className="hero">
             <div className="hero-container">
               <div className="hero-badge animate-slide-down">
-                ✨ Generator dokumentów nowej generacji
+                <span>⚡</span> SECURE DOCUMENT GENERATOR v2.0
               </div>
               <h1 className="hero-title animate-slide-up">
-                Generuj profesjonalne<br/>
-                <span className="gradient-text">dokumenty w sekundę</span>
+                Generate Secure<br/>
+                <span className="gradient-text">Documents Instantly</span>
               </h1>
               <p className="hero-subtitle animate-slide-up">
-                Twórz eleganckie potwierdzenia, faktury i inne dokumenty.<br/>
-                Automatyczna wysyłka na email – szybko, prosto, bezpiecznie.
+                Create encrypted confirmations, invoices and secure documents.<br/>
+                Automated email delivery via secure SMTP protocol.
               </p>
               <div className="hero-buttons animate-slide-up">
                 <button className="btn-primary btn-large" onClick={scrollToGenerator}>
-                  🚀 {user ? 'Generuj dokument' : 'Rozpocznij teraz'}
+                  {user ? '[ GENERATE ]' : '[ ACCESS SYSTEM ]'}
                 </button>
+              </div>
+              
+              <div className="hero-stats animate-fade-in">
+                <div className="stat-item">
+                  <div className="stat-value">3</div>
+                  <div className="stat-label">Templates</div>
+                </div>
+                <div className="stat-divider"></div>
+                <div className="stat-item">
+                  <div className="stat-value">∞</div>
+                  <div className="stat-label">Documents</div>
+                </div>
+                <div className="stat-divider"></div>
+                <div className="stat-item">
+                  <div className="stat-value">🔒</div>
+                  <div className="stat-label">Encrypted</div>
+                </div>
               </div>
             </div>
           </section>
