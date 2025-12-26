@@ -425,9 +425,9 @@ const Generator = ({ showToast }) => {
   const previewRef = useRef(null);
 
   const templates = [
-    { id: 'receipt', name: 'Potwierdzenie zamówienia', icon: '🧾' },
-    { id: 'invoice', name: 'Faktura', icon: '📄' },
-    { id: 'confirmation', name: 'Potwierdzenie operacji', icon: '✅' }
+    { id: 'receipt', name: 'Receipt', icon: '📋' },
+    { id: 'invoice', name: 'Invoice', icon: '📄' },
+    { id: 'confirmation', name: 'Confirm', icon: '✓' }
   ];
 
   const validateForm = () => {
