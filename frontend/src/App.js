@@ -711,8 +711,8 @@ const AppContent = ({ toast, showToast, page, setPage, generatorRef }) => {
       <nav className="navbar">
         <div className="nav-container">
           <div className="nav-logo" onClick={() => setPage('home')} style={{cursor: 'pointer'}}>
-            <span className="logo-icon">📄</span>
-            <span className="logo-text">DocGen</span>
+            <span className="logo-icon">🔐</span>
+            <span className="logo-text">DOCGEN</span>
           </div>
           
           <div className="nav-actions">
