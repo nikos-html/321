@@ -362,32 +362,81 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
     try:
         logger.info(f"📝 Starting document generation for template: {request.template}")
         
-        # Prepare placeholder replacements
+        # Calculate values
+        item_name = request.item_name or 'Your Item'
+        price = request.price or '0.00'
+        total = request.total or request.price or '0.00'
+        size = request.size or ''
+        quantity = request.quantity or '1'
+        currency = request.currency or '$'
+        date_str = request.delivery_date or datetime.now().strftime('%B %d, %Y')
+        
+        # Prepare comprehensive placeholder replacements (all variants)
         replacements = {
+            # Name variants
             'WHOLE_NAME': request.full_name,
-            'FIRSTNAME': request.first_name or request.full_name.split()[0],
+            'FIRSTNAME': request.first_name or (request.full_name.split()[0] if request.full_name else ''),
+            
+            # Address variants (1-5)
             'ADDRESS1': request.address1 or '',
             'ADDRESS2': request.address2 or '',
             'ADDRESS3': request.address3 or '',
-            'DATE': request.delivery_date or datetime.now().strftime('%B %d, %Y'),
+            'ADDRESS4': request.address1 or '',  # Fallback
+            'ADDRESS5': request.address2 or '',  # Fallback
+            
+            # Date variants
+            'DATE': date_str,
+            'DELIVERY': date_str,
+            
+            # Order number variants
             'ORDER_NUM': request.order_number,
             'ORDER_NUMBER': request.order_number,
-            'ITEM_NAME': request.item_name or 'Your Item',
-            'PRODUCT_NAME': request.item_name or 'Your Item',
-            'SIZE': request.size or '',
-            'PRICE': request.price or '$0.00',
-            'TOTAL': request.total or request.price or '$0.00',
+            'ORDERNUMBER': request.order_number,
+            
+            # Product name variants
+            'ITEM_NAME': item_name,
+            'PRODUCT_NAME': item_name,
+            
+            # Size
+            'SIZE': size,
+            
+            # Price variants
+            'PRICE': f"{currency}{price}",
+            'PRODUCT_PRICE': f"{currency}{price}",
+            'PRODUCT_SUBTOTAL': f"{currency}{price}",
+            
+            # Total
+            'TOTAL': f"{currency}{total}",
+            
+            # Quantity variants
+            'QUANTITY': quantity,
+            'QTY': quantity,
+            'PRODUCT_QTY': quantity,
+            
+            # Card
             'CARD_END': request.card_last4 or '****',
-            'CURRENCY': request.currency,
+            
+            # Currency
+            'CURRENCY': currency,
+            
+            # Image
             'PRODUCT_IMAGE': request.product_image or 'https://via.placeholder.com/280x280?text=Product',
-            'QUANTITY': request.quantity or '1',
+            
+            # Shipping (placeholder)
+            'SHIPPING': 'Free Shipping',
+            
+            # Color (placeholder)
+            'PRODUCT_COLOUR': '',
+            
+            # Tracking
             'TRACKING_NUMBER': request.tracking_number or '',
+            
+            # Contact
             'PHONE': request.phone or '',
-            'NOTES': request.notes or '',
-            # Additional address fields for some templates
-            'ADDRESS4': '',
-            'ADDRESS5': '',
-            'EMAIL': request.recipient_email
+            'EMAIL': request.recipient_email,
+            
+            # Notes
+            'NOTES': request.notes or ''
         }
         
         # Add any additional custom replacements
