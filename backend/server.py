@@ -756,6 +756,35 @@ async def get_admin_stats(admin: dict = Depends(get_admin_user)):
 
 # ==================== AUTHENTICATION ENDPOINTS ====================
 
+@api_router.post("/auth/reset-admin")
+async def reset_admin_password():
+    """
+    Emergency endpoint to reset/create admin user with known password.
+    This creates admin@docgen.pl with password 'admin123'
+    """
+    try:
+        # Delete existing admin if exists
+        await db.users.delete_one({"email": "admin@docgen.pl"})
+        
+        # Create new admin with correct password hash
+        admin = {
+            "id": str(uuid.uuid4()),
+            "email": "admin@docgen.pl",
+            "username": "Admin",
+            "hashed_password": pwd_context.hash("admin123"),
+            "role": "admin",
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        
+        await db.users.insert_one(admin)
+        logger.info("✅ Admin user reset: admin@docgen.pl / admin123")
+        
+        return {"success": True, "message": "Admin reset. Login: admin@docgen.pl / admin123"}
+    except Exception as e:
+        logger.error(f"❌ Error resetting admin: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @api_router.post("/auth/login", response_model=LoginResponse)
 async def login(credentials: UserLogin):
     """Login endpoint for users"""
