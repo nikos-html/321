@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import "./App.css";
 import axios from "axios";
+import AdminPanel from "./AdminPanel";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
 const API = `${BACKEND_URL}/api`;
@@ -206,6 +207,7 @@ function Dashboard({ user, onLogout }) {
   const [selectedTemplate, setSelectedTemplate] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
   const [formData, setFormData] = useState({
     recipient_email: "",
     full_name: "",
@@ -309,6 +311,14 @@ function Dashboard({ user, onLogout }) {
               <span className="text-gray-700">
                 👤 <span className="font-semibold">{user.email}</span>
               </span>
+              {user.role === "admin" && (
+                <button
+                  onClick={() => setShowAdminPanel(true)}
+                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all"
+                >
+                  🔧 Panel Admina
+                </button>
+              )}
               <button
                 onClick={onLogout}
                 className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
