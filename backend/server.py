@@ -424,11 +424,11 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
             # Image
             'PRODUCT_IMAGE': request.product_image or 'https://via.placeholder.com/280x280?text=Product',
             
-            # Shipping (placeholder)
-            'SHIPPING': 'Free Shipping',
+            # Shipping
+            'SHIPPING': request.shipping or 'Free Shipping',
             
-            # Color (placeholder)
-            'PRODUCT_COLOUR': '',
+            # Color
+            'PRODUCT_COLOUR': request.color or '',
             
             # Tracking
             'TRACKING_NUMBER': request.tracking_number or '',
