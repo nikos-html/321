@@ -383,7 +383,11 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
             'QUANTITY': request.quantity or '1',
             'TRACKING_NUMBER': request.tracking_number or '',
             'PHONE': request.phone or '',
-            'NOTES': request.notes or ''
+            'NOTES': request.notes or '',
+            # Additional address fields for some templates
+            'ADDRESS4': '',
+            'ADDRESS5': '',
+            'EMAIL': request.recipient_email
         }
         
         # Add any additional custom replacements
