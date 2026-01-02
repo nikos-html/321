@@ -118,6 +118,7 @@ class DocumentGenerateRequest(BaseModel):
     order_number: Optional[str] = Field("", description="Order number")
     item_name: Optional[str] = Field(None, description="Product name")
     size: Optional[str] = Field(None, description="Product size")
+    style_id: Optional[str] = Field(None, description="Style ID for StockX")
     price: Optional[str] = Field(None, description="Item price")
     total: Optional[str] = Field(None, description="Total amount")
     card_last4: Optional[str] = Field(None, description="Last 4 digits of card")
