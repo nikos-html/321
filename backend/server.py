@@ -366,17 +366,30 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
         
         # Calculate values
         item_name = request.item_name or 'Your Item'
-        price = request.price or '0.00'
-        total = request.total or request.price or '0.00'
+        price_num = request.price or '0.00'
+        total_num = request.total or request.price or '0.00'
         size = request.size or ''
         quantity = request.quantity or '1'
         currency = request.currency or '$'
-        date_str = request.delivery_date or datetime.now().strftime('%B %d, %Y')
+        
+        # Format date as DD.MM.YYYY for European format
+        if request.delivery_date:
+            date_str = request.delivery_date
+        else:
+            date_str = datetime.now().strftime('%d.%m.%Y')
+        
+        # Calculate processing fee (3% of price)
+        try:
+            price_float = float(price_num.replace(',', '.'))
+            fee = round(price_float * 0.03, 2)
+            fee_str = f"{currency}{fee:.2f}"
+        except:
+            fee_str = f"{currency}0.00"
         
         # Prepare comprehensive placeholder replacements (all variants)
         replacements = {
             # Name variants
-            'WHOLE_NAME': request.full_name,
+            'WHOLE_NAME': request.full_name or '',
             'FIRSTNAME': request.first_name or (request.full_name.split()[0] if request.full_name else ''),
             
             # Address variants (1-5)
@@ -391,24 +404,28 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
             'DELIVERY': date_str,
             
             # Order number variants
-            'ORDER_NUM': request.order_number,
-            'ORDER_NUMBER': request.order_number,
-            'ORDERNUMBER': request.order_number,
+            'ORDER_NUM': request.order_number or '',
+            'ORDER_NUMBER': request.order_number or '',
+            'ORDERNUMBER': request.order_number or '',
             
             # Product name variants
             'ITEM_NAME': item_name,
             'PRODUCT_NAME': item_name,
             
-            # Size
+            # Size and Style
             'SIZE': size,
+            'STYLE_ID': size,  # Use size as style ID if not provided separately
             
             # Price variants
-            'PRICE': f"{currency}{price}",
-            'PRODUCT_PRICE': f"{currency}{price}",
-            'PRODUCT_SUBTOTAL': f"{currency}{price}",
+            'PRICE': f"{currency}{price_num}",
+            'PRODUCT_PRICE': f"{currency}{price_num}",
+            'PRODUCT_SUBTOTAL': f"{currency}{price_num}",
             
             # Total
-            'TOTAL': f"{currency}{total}",
+            'TOTAL': f"{currency}{total_num}",
+            
+            # Fee (3% of price)
+            'FEE': fee_str,
             
             # Quantity variants
             'QUANTITY': quantity,
