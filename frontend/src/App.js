@@ -7,45 +7,45 @@ const API = `${BACKEND_URL}/api`;
 
 // Template field configurations
 const TEMPLATE_FIELDS = {
+  apple: {
+    name: "Apple",
+    fields: ["recipient_email", "address1", "address2", "address3", "delivery_date", "order_number", "item_name", "price", "total", "product_image", "quantity", "shipping"]
+  },
+  balenciaga: {
+    name: "Balenciaga",
+    fields: ["recipient_email", "first_name", "address1", "address2", "address3", "order_number", "item_name", "price", "total", "product_image", "color", "shipping"]
+  },
+  bape: {
+    name: "BAPE",
+    fields: ["recipient_email", "address1", "address2", "address3", "order_number", "item_name", "size", "price", "total", "card_last4", "currency", "product_image", "shipping"]
+  },
+  dior: {
+    name: "Dior",
+    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "product_image", "shipping"]
+  },
   nike: {
     name: "Nike",
     fields: ["recipient_email", "full_name", "first_name", "address1", "address2", "address3", "delivery_date", "order_number", "item_name", "size", "price", "total", "card_last4", "currency", "product_image"]
   },
-  apple: {
-    name: "Apple",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total", "product_image", "quantity"]
-  },
-  balenciaga: {
-    name: "Balenciaga",
-    fields: ["recipient_email", "first_name", "order_number", "item_name", "price", "total", "product_image", "address1"]
-  },
-  zalando: {
-    name: "Zalando",
-    fields: ["recipient_email", "full_name", "address1", "address2", "address3", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image", "quantity"]
-  },
-  supreme: {
-    name: "Supreme",
-    fields: ["recipient_email", "full_name", "order_number", "delivery_date", "item_name", "size", "price", "total", "currency"]
-  },
   stockx_new: {
     name: "StockX",
-    fields: ["recipient_email", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image"]
+    fields: ["recipient_email", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image", "shipping"]
   },
   stussy: {
     name: "Stussy",
-    fields: ["recipient_email", "address1", "address2", "address3", "order_number", "item_name", "size", "price", "total", "product_image"]
+    fields: ["recipient_email", "address1", "address2", "address3", "order_number", "item_name", "size", "price", "total", "product_image", "quantity", "shipping"]
+  },
+  supreme: {
+    name: "Supreme",
+    fields: ["recipient_email", "delivery_date", "order_number", "item_name", "size", "price", "total", "currency"]
   },
   trapstar: {
     name: "Trapstar",
-    fields: ["recipient_email", "item_name", "size", "product_image"]
+    fields: ["recipient_email", "order_number", "item_name", "size", "product_image"]
   },
-  dior: {
-    name: "Dior",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "product_image"]
-  },
-  bape: {
-    name: "BAPE",
-    fields: ["recipient_email", "address1", "address2", "address3", "order_number", "item_name", "size", "price", "total", "card_last4", "currency", "product_image"]
+  zalando: {
+    name: "Zalando",
+    fields: ["recipient_email", "full_name", "address1", "address2", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image", "quantity", "color"]
   }
 };
 
