@@ -415,7 +415,7 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
             
             # Size and Style
             'SIZE': size,
-            'STYLE_ID': size,  # Use size as style ID if not provided separately
+            'STYLE_ID': request.style_id or size,  # Use style_id if provided, otherwise size
             
             # Price variants
             'PRICE': f"{currency}{price_num}",
