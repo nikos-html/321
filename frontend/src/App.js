@@ -273,7 +273,7 @@ function Dashboard({ user, onLogout }) {
     recipient_email: "", full_name: "", first_name: "", address1: "", address2: "", address3: "",
     delivery_date: "", order_number: "", item_name: "", size: "", price: "", total: "",
     card_last4: "", currency: "$", subject: "", product_image: "", quantity: "1",
-    tracking_number: "", phone: ""
+    tracking_number: "", phone: "", shipping: "Free Shipping", color: ""
   });
 
   const fetchTemplates = useCallback(async () => {
