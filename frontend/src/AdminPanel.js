@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
@@ -21,17 +21,11 @@ function AdminPanel({ user, onBack }) {
     role: "user"
   });
 
-  useEffect(() => {
-    if (activeTab === "users") fetchUsers();
-    if (activeTab === "documents") fetchDocuments();
-    if (activeTab === "stats") fetchStats();
-  }, [activeTab]);
-
-  const getAuthHeaders = () => ({
+  const getAuthHeaders = useCallback(() => ({
     headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
-  });
+  }), []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/admin/users`, getAuthHeaders());
       setUsers(response.data.users || []);
@@ -39,25 +33,31 @@ function AdminPanel({ user, onBack }) {
       console.error("Error fetching users:", error);
       setMessage("❌ Błąd pobierania użytkowników");
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/admin/documents`, getAuthHeaders());
       setDocuments(response.data.documents || []);
     } catch (error) {
       console.error("Error fetching documents:", error);
     }
-  };
+  }, [getAuthHeaders]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/admin/stats`, getAuthHeaders());
       setStats(response.data);
     } catch (error) {
       console.error("Error fetching stats:", error);
     }
-  };
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    if (activeTab === "users") fetchUsers();
+    if (activeTab === "documents") fetchDocuments();
+    if (activeTab === "stats") fetchStats();
+  }, [activeTab, fetchUsers, fetchDocuments, fetchStats]);
 
   const handleAddUser = async (e) => {
     e.preventDefault();
