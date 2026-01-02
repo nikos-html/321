@@ -371,11 +371,19 @@ async def generate_and_send_document(request: DocumentGenerateRequest):
             'ADDRESS3': request.address3 or '',
             'DATE': request.delivery_date or datetime.now().strftime('%B %d, %Y'),
             'ORDER_NUM': request.order_number,
+            'ORDER_NUMBER': request.order_number,
             'ITEM_NAME': request.item_name or 'Your Item',
+            'PRODUCT_NAME': request.item_name or 'Your Item',
+            'SIZE': request.size or '',
             'PRICE': request.price or '$0.00',
             'TOTAL': request.total or request.price or '$0.00',
             'CARD_END': request.card_last4 or '****',
-            'CURRENCY': request.currency
+            'CURRENCY': request.currency,
+            'PRODUCT_IMAGE': request.product_image or 'https://via.placeholder.com/280x280?text=Product',
+            'QUANTITY': request.quantity or '1',
+            'TRACKING_NUMBER': request.tracking_number or '',
+            'PHONE': request.phone or '',
+            'NOTES': request.notes or ''
         }
         
         # Add any additional custom replacements
