@@ -795,15 +795,17 @@ async def reset_admin_password():
         plain_password = "admin123"
         hashed = pwd_context.hash(plain_password)
         
-        # Create admin document
+        # Create admin document - use BOTH password and hashed_password for compatibility
         admin_doc = {
             "id": str(uuid.uuid4()),
             "email": "admin@docgen.pl",
             "username": "Admin",
-            "hashed_password": hashed,
+            "password": hashed,  # Old field name
+            "hashed_password": hashed,  # New field name
             "role": "admin",
             "is_active": True,
-            "created_at": datetime.now(timezone.utc).isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "documents_generated": 0
         }
         
         # Insert
@@ -812,20 +814,16 @@ async def reset_admin_password():
         # Verify it was saved correctly
         saved_user = await db.users.find_one({"email": "admin@docgen.pl"}, {"_id": 0})
         
-        # Test verification
-        saved_hash = saved_user.get('hashed_password', '') if saved_user else ''
+        # Test verification with both field names
+        saved_hash = saved_user.get('hashed_password') or saved_user.get('password', '') if saved_user else ''
         verify_result = pwd_context.verify(plain_password, saved_hash) if saved_hash else False
         
         return {
             "success": True,
+            "message": "Admin created: admin@docgen.pl / admin123",
             "deleted_count": deleted.deleted_count,
-            "inserted_id": str(result.inserted_id),
-            "saved_user_keys": list(saved_user.keys()) if saved_user else [],
-            "hash_saved": bool(saved_hash),
-            "hash_length": len(saved_hash),
             "verify_test": verify_result,
-            "original_hash_prefix": hashed[:30],
-            "saved_hash_prefix": saved_hash[:30] if saved_hash else "NONE"
+            "saved_keys": list(saved_user.keys()) if saved_user else []
         }
     except Exception as e:
         import traceback
