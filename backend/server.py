@@ -16,6 +16,7 @@ import jwt
 import aiosmtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -31,6 +32,9 @@ logger = logging.getLogger(__name__)
 SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'your-secret-key-change-this-in-production')
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
+
+# Security
+security = HTTPBearer(auto_error=False)
 
 # Email Configuration
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
@@ -88,6 +92,15 @@ class LoginResponse(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+class CreateUserRequest(BaseModel):
+    email: EmailStr
+    password: str
+    username: Optional[str] = None
+    role: Optional[str] = "user"
+
+class ToggleUserRequest(BaseModel):
+    is_active: bool
 
 class DocumentGenerateRequest(BaseModel):
     """Request model for document generation"""
