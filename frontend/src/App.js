@@ -29,43 +29,23 @@ const TEMPLATE_FIELDS = {
   },
   stockx_new: {
     name: "StockX",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "size", "price", "product_image"]
+    fields: ["recipient_email", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image"]
   },
   stussy: {
     name: "Stussy",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total"]
+    fields: ["recipient_email", "address1", "address2", "address3", "order_number", "item_name", "size", "price", "total", "product_image"]
   },
   trapstar: {
     name: "Trapstar",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total", "product_image"]
-  },
-  moncler: {
-    name: "Moncler",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total", "product_image"]
+    fields: ["recipient_email", "item_name", "size", "product_image"]
   },
   dior: {
     name: "Dior",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total", "product_image"]
-  },
-  lv: {
-    name: "Louis Vuitton",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total", "product_image"]
+    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "product_image"]
   },
   bape: {
     name: "BAPE",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total"]
-  },
-  grail_point: {
-    name: "Grail Point",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total", "product_image"]
-  },
-  media_expert: {
-    name: "Media Expert",
-    fields: ["recipient_email", "full_name", "address1", "address2", "order_number", "item_name", "price", "total"]
-  },
-  notino: {
-    name: "Notino",
-    fields: ["recipient_email", "full_name", "order_number", "item_name", "price", "total"]
+    fields: ["recipient_email", "address1", "address2", "address3", "order_number", "item_name", "size", "price", "total", "card_last4", "currency", "product_image"]
   }
 };
 
