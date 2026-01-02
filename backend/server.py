@@ -109,13 +109,13 @@ class DocumentGenerateRequest(BaseModel):
     """Request model for document generation"""
     template: str = Field(..., description="Template name (e.g., 'nike', 'apple')")
     recipient_email: EmailStr = Field(..., description="Recipient email address")
-    full_name: str = Field(..., description="Full name for WHOLE_NAME")
+    full_name: Optional[str] = Field("", description="Full name for WHOLE_NAME")
     first_name: Optional[str] = Field(None, description="First name for FIRSTNAME")
     address1: Optional[str] = Field(None, description="Address line 1")
     address2: Optional[str] = Field(None, description="Address line 2")
     address3: Optional[str] = Field(None, description="Address line 3 (city, zip)")
     delivery_date: Optional[str] = Field(None, description="Estimated delivery date")
-    order_number: str = Field(..., description="Order number")
+    order_number: Optional[str] = Field("", description="Order number")
     item_name: Optional[str] = Field(None, description="Product name")
     size: Optional[str] = Field(None, description="Product size")
     price: Optional[str] = Field(None, description="Item price")
@@ -128,6 +128,8 @@ class DocumentGenerateRequest(BaseModel):
     tracking_number: Optional[str] = Field(None, description="Tracking number")
     phone: Optional[str] = Field(None, description="Phone number")
     notes: Optional[str] = Field(None, description="Additional notes")
+    shipping: Optional[str] = Field("Free Shipping", description="Shipping info")
+    color: Optional[str] = Field(None, description="Product color")
     additional_data: Optional[Dict[str, Any]] = Field(None, description="Additional placeholder replacements")
 
 class DocumentResponse(BaseModel):
