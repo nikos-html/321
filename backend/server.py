@@ -636,15 +636,16 @@ async def create_user_admin(user_data: CreateUserRequest, admin: dict = Depends(
             raise HTTPException(status_code=400, detail="User with this email already exists")
         
         # Hash password
-        hashed_password = pwd_context.hash(user_data.password)
+        hashed = pwd_context.hash(user_data.password)
         
-        # Create user
+        # Create user with BOTH password fields for compatibility
         user_id = str(uuid.uuid4())
         new_user = {
             "id": user_id,
             "email": user_data.email,
             "username": user_data.username or user_data.email.split('@')[0],
-            "hashed_password": hashed_password,
+            "password": hashed,  # Old field name for compatibility
+            "hashed_password": hashed,  # New field name
             "role": user_data.role,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "is_active": True,
@@ -654,8 +655,9 @@ async def create_user_admin(user_data: CreateUserRequest, admin: dict = Depends(
         await db.users.insert_one(new_user)
         logger.info(f"✅ User created: {user_data.email}")
         
-        # Remove password from response
-        new_user.pop("password")
+        # Remove password fields from response
+        new_user.pop("password", None)
+        new_user.pop("hashed_password", None)
         new_user.pop("_id", None)
         
         return {"success": True, "user": new_user}
