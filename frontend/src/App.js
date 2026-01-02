@@ -61,15 +61,17 @@ const FIELD_CONFIG = {
   order_number: { label: "NUMER ZAMÓWIENIA *", placeholder: "NK-2026-12345", type: "text", required: true },
   item_name: { label: "NAZWA PRODUKTU", placeholder: "Nike Air Max 90", type: "text" },
   size: { label: "ROZMIAR", placeholder: "42 EU / 8.5 US", type: "text" },
-  price: { label: "CENA", placeholder: "180.00", type: "text" },
-  total: { label: "SUMA CAŁKOWITA", placeholder: "190.46", type: "text" },
+  price: { label: "CENA (bez waluty)", placeholder: "180.00", type: "text" },
+  total: { label: "SUMA (bez waluty)", placeholder: "190.46", type: "text" },
   card_last4: { label: "OSTATNIE 4 CYFRY KARTY", placeholder: "1234", type: "text", maxLength: 4 },
   currency: { label: "WALUTA", placeholder: "$", type: "select", options: ["$", "€", "£", "zł"] },
   product_image: { label: "🖼️ LINK DO ZDJĘCIA", placeholder: "https://example.com/image.png", type: "url" },
   quantity: { label: "ILOŚĆ", placeholder: "1", type: "number" },
   tracking_number: { label: "NUMER ŚLEDZENIA", placeholder: "1Z999AA10123456784", type: "text" },
   phone: { label: "TELEFON", placeholder: "+48 123 456 789", type: "text" },
-  subject: { label: "TEMAT EMAILA", placeholder: "Your Order Confirmation", type: "text" }
+  subject: { label: "TEMAT EMAILA", placeholder: "Your Order Confirmation", type: "text" },
+  shipping: { label: "DOSTAWA", placeholder: "Free Shipping", type: "text" },
+  color: { label: "KOLOR", placeholder: "Black/White", type: "text" }
 };
 
 // ==================== LANDING PAGE ====================
