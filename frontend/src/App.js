@@ -71,7 +71,8 @@ const FIELD_CONFIG = {
   phone: { label: "TELEFON", placeholder: "+48 123 456 789", type: "text" },
   subject: { label: "TEMAT EMAILA", placeholder: "Your Order Confirmation", type: "text" },
   shipping: { label: "DOSTAWA", placeholder: "Free Shipping", type: "text" },
-  color: { label: "KOLOR", placeholder: "Black/White", type: "text" }
+  color: { label: "KOLOR", placeholder: "Black/White", type: "text" },
+  style_id: { label: "STYLE ID", placeholder: "DZ5485-612", type: "text" }
 };
 
 // ==================== LANDING PAGE ====================
