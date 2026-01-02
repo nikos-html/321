@@ -549,7 +549,7 @@ async def create_user_admin(user_data: CreateUserRequest, admin: dict = Depends(
             raise HTTPException(status_code=400, detail="User with this email already exists")
         
         # Hash password
-        hashed_password = bcrypt.hashpw(user_data.password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = pwd_context.hash(user_data.password)
         
         # Create user
         user_id = str(uuid.uuid4())
@@ -557,9 +557,9 @@ async def create_user_admin(user_data: CreateUserRequest, admin: dict = Depends(
             "id": user_id,
             "email": user_data.email,
             "username": user_data.username or user_data.email.split('@')[0],
-            "password": hashed_password.decode('utf-8'),
+            "hashed_password": hashed_password,
             "role": user_data.role,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "is_active": True,
             "documents_generated": 0
         }
