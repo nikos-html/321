@@ -524,6 +524,146 @@ async def get_status_checks():
         logger.error(f"❌ Error fetching status checks: {e}")
         return []
 
+# ==================== ADMIN ENDPOINTS ====================
+
+@api_router.get("/admin/users")
+async def get_all_users(admin: dict = Depends(get_admin_user)):
+    """Get all users (Admin only)"""
+    try:
+        users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(1000)
+        return {"users": users, "count": len(users)}
+    except Exception as e:
+        logger.error(f"❌ Error fetching users: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.post("/admin/users")
+async def create_user_admin(user_data: CreateUserRequest, admin: dict = Depends(get_admin_user)):
+    """Create new user (Admin only)"""
+    try:
+        # Check if user already exists
+        existing_user = await db.users.find_one({"email": user_data.email})
+        if existing_user:
+            raise HTTPException(status_code=400, detail="User with this email already exists")
+        
+        # Hash password
+        hashed_password = bcrypt.hashpw(user_data.password.encode('utf-8'), bcrypt.gensalt())
+        
+        # Create user
+        user_id = str(uuid.uuid4())
+        new_user = {
+            "id": user_id,
+            "email": user_data.email,
+            "username": user_data.username or user_data.email.split('@')[0],
+            "password": hashed_password.decode('utf-8'),
+            "role": user_data.role,
+            "created_at": datetime.utcnow().isoformat(),
+            "is_active": True,
+            "documents_generated": 0
+        }
+        
+        await db.users.insert_one(new_user)
+        logger.info(f"✅ User created: {user_data.email}")
+        
+        # Remove password from response
+        new_user.pop("password")
+        new_user.pop("_id", None)
+        
+        return {"success": True, "user": new_user}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error creating user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.delete("/admin/users/{user_id}")
+async def delete_user_admin(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Delete user (Admin only)"""
+    try:
+        # Don't allow admin to delete themselves
+        if user_id == admin["id"]:
+            raise HTTPException(status_code=400, detail="Cannot delete your own account")
+        
+        result = await db.users.delete_one({"id": user_id})
+        
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        logger.info(f"✅ User deleted: {user_id}")
+        return {"success": True, "message": "User deleted"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error deleting user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.put("/admin/users/{user_id}/toggle")
+async def toggle_user_active(user_id: str, data: ToggleUserRequest, admin: dict = Depends(get_admin_user)):
+    """Activate/Deactivate user (Admin only)"""
+    try:
+        # Don't allow admin to deactivate themselves
+        if user_id == admin["id"]:
+            raise HTTPException(status_code=400, detail="Cannot deactivate your own account")
+        
+        result = await db.users.update_one(
+            {"id": user_id},
+            {"$set": {"is_active": data.is_active}}
+        )
+        
+        if result.matched_count == 0:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        status_text = "activated" if data.is_active else "deactivated"
+        logger.info(f"✅ User {status_text}: {user_id}")
+        
+        return {"success": True, "message": f"User {status_text}"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error toggling user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/admin/documents")
+async def get_all_documents_admin(admin: dict = Depends(get_admin_user), limit: int = 100):
+    """Get all documents (Admin only)"""
+    try:
+        documents = await db.documents.find(
+            {},
+            {"_id": 0}
+        ).sort("created_at", -1).limit(limit).to_list(limit)
+        
+        return {"documents": documents, "count": len(documents)}
+    except Exception as e:
+        logger.error(f"❌ Error fetching documents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@api_router.get("/admin/stats")
+async def get_admin_stats(admin: dict = Depends(get_admin_user)):
+    """Get system statistics (Admin only)"""
+    try:
+        total_users = await db.users.count_documents({})
+        active_users = await db.users.count_documents({"is_active": True})
+        total_documents = await db.documents.count_documents({})
+        documents_sent = await db.documents.count_documents({"email_sent": True})
+        
+        return {
+            "users": {
+                "total": total_users,
+                "active": active_users,
+                "inactive": total_users - active_users
+            },
+            "documents": {
+                "total": total_documents,
+                "sent": documents_sent,
+                "failed": total_documents - documents_sent
+            }
+        }
+    except Exception as e:
+        logger.error(f"❌ Error fetching stats: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ==================== AUTHENTICATION ENDPOINTS ====================
 
 @api_router.post("/auth/login", response_model=LoginResponse)
