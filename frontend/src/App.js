@@ -1,13 +1,89 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import "./App.css";
 import axios from "axios";
-import AdminPanel from "./AdminPanel";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
 const API = `${BACKEND_URL}/api`;
 
-// ==================== LOGIN/REGISTER PAGE ====================
-function AuthPage({ onLoginSuccess }) {
+// ==================== LANDING PAGE ====================
+function LandingPage({ onAccessSystem }) {
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-mono">
+      {/* Navigation */}
+      <nav className="flex justify-between items-center px-8 py-6">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🔒</span>
+          <span className="text-2xl font-bold tracking-wider">
+            <span className="text-orange-500">DOC</span>
+            <span className="text-green-400">GEN</span>
+          </span>
+        </div>
+        <button
+          onClick={onAccessSystem}
+          className="px-6 py-2 border-2 border-green-500 text-green-400 font-bold tracking-wider hover:bg-green-500/10 transition-all"
+        >
+          ZALOGUJ SIĘ
+        </button>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="flex flex-col items-center justify-center px-4 pt-20 pb-16">
+        {/* Badge */}
+        <div className="mb-8 px-6 py-2 border border-green-500/50 rounded-sm">
+          <span className="text-green-400 text-sm tracking-widest">
+            ⚡ SECURE DOCUMENT GENERATOR V2.0
+          </span>
+        </div>
+
+        {/* Main Heading */}
+        <h1 className="text-5xl md:text-7xl font-black text-center mb-4 tracking-tight">
+          GENERATE SECURE
+        </h1>
+        <h2 className="text-5xl md:text-7xl font-black text-center mb-4 tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+          DOCUMENTS
+        </h2>
+        <h2 className="text-5xl md:text-7xl font-black text-center mb-8 tracking-tight bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+          INSTANTLY
+        </h2>
+
+        {/* Description */}
+        <p className="text-gray-400 text-center mb-2 tracking-wide">
+          Create encrypted confirmations, invoices and secure documents.
+        </p>
+        <p className="text-gray-500 text-center mb-12 tracking-wide">
+          Automated email delivery via secure SMTP protocol.
+        </p>
+
+        {/* CTA Button */}
+        <button
+          onClick={onAccessSystem}
+          className="px-10 py-4 border-2 border-green-500 text-green-400 font-bold tracking-widest hover:bg-green-500/10 hover:shadow-[0_0_30px_rgba(34,197,94,0.3)] transition-all"
+        >
+          [ ACCESS SYSTEM ]
+        </button>
+
+        {/* Stats */}
+        <div className="flex gap-16 mt-20">
+          <div className="text-center">
+            <div className="text-3xl font-bold text-green-400 mb-2">15</div>
+            <div className="text-xs text-gray-500 tracking-widest">SZABLONÓW</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl font-bold text-cyan-400 mb-2">∞</div>
+            <div className="text-xs text-gray-500 tracking-widest">DOCUMENTS</div>
+          </div>
+          <div className="text-center">
+            <div className="text-3xl text-green-400 mb-2">🔒</div>
+            <div className="text-xs text-gray-500 tracking-widest">ENCRYPTED</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==================== LOGIN PAGE ====================
+function LoginPage({ onLoginSuccess, onBack }) {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,7 +98,6 @@ function AuthPage({ onLoginSuccess }) {
 
     try {
       if (isLogin) {
-        // Login
         const response = await axios.post(`${API}/auth/login`, {
           email,
           password
@@ -34,7 +109,6 @@ function AuthPage({ onLoginSuccess }) {
           onLoginSuccess(response.data.user);
         }
       } else {
-        // Register - tutaj możesz dodać endpoint rejestracji
         setError("Rejestracja nie jest jeszcze dostępna. Skontaktuj się z administratorem.");
       }
     } catch (err) {
@@ -46,162 +120,126 @@ function AuthPage({ onLoginSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        {/* Logo/Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            📧 DocGen
-          </h1>
-          <p className="text-gray-600">
-            Generator Dokumentów HTML
-          </p>
-        </div>
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-mono flex flex-col">
+      {/* Navigation */}
+      <nav className="flex justify-between items-center px-8 py-6">
+        <button onClick={onBack} className="flex items-center gap-2 hover:text-green-400 transition-all">
+          <span>←</span>
+          <span className="text-2xl font-bold tracking-wider">
+            <span className="text-orange-500">DOC</span>
+            <span className="text-green-400">GEN</span>
+          </span>
+        </button>
+      </nav>
 
-        {/* Tabs */}
-        <div className="flex mb-6 bg-gray-100 rounded-lg p-1">
-          <button
-            onClick={() => setIsLogin(true)}
-            className={`flex-1 py-2 px-4 rounded-md font-semibold transition-all ${
-              isLogin
-                ? "bg-white text-indigo-600 shadow"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            Zaloguj się
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            className={`flex-1 py-2 px-4 rounded-md font-semibold transition-all ${
-              !isLogin
-                ? "bg-white text-indigo-600 shadow"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            Zarejestruj
-          </button>
-        </div>
+      {/* Login Form */}
+      <div className="flex-1 flex items-center justify-center px-4">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2 tracking-wider">
+              {isLogin ? "LOGOWANIE" : "REJESTRACJA"}
+            </h1>
+            <p className="text-gray-500 text-sm tracking-wide">
+              Secure Document Generator
+            </p>
+          </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
+          {/* Tabs */}
+          <div className="flex mb-8 border border-gray-700">
+            <button
+              onClick={() => setIsLogin(true)}
+              className={`flex-1 py-3 font-bold tracking-wider transition-all ${
+                isLogin
+                  ? "bg-green-500/20 text-green-400 border-b-2 border-green-500"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              ZALOGUJ SIĘ
+            </button>
+            <button
+              onClick={() => setIsLogin(false)}
+              className={`flex-1 py-3 font-bold tracking-wider transition-all ${
+                !isLogin
+                  ? "bg-green-500/20 text-green-400 border-b-2 border-green-500"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              ZAREJESTRUJ
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {!isLogin && (
+              <div>
+                <label className="block text-xs text-gray-500 mb-2 tracking-widest">
+                  NAZWA UŻYTKOWNIKA
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Jan Kowalski"
+                  className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
+                  required={!isLogin}
+                />
+              </div>
+            )}
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nazwa użytkownika
+              <label className="block text-xs text-gray-500 mb-2 tracking-widest">
+                EMAIL
               </label>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Jan Kowalski"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                required={!isLogin}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="twoj@email.com"
+                className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
+                required
               />
             </div>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Email
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="twoj@email.com"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hasło
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
+            <div>
+              <label className="block text-xs text-gray-500 mb-2 tracking-widest">
+                HASŁO
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
+                required
+              />
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className={`w-full py-3 px-4 rounded-lg font-semibold text-white transition-all ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg"
-            }`}
-          >
-            {loading ? "⏳ Ładowanie..." : isLogin ? "🔐 Zaloguj się" : "✨ Utwórz konto"}
-          </button>
-        </form>
+            {error && (
+              <div className="p-4 border border-red-500/50 bg-red-500/10 text-red-400 text-sm">
+                ⚠️ {error}
+              </div>
+            )}
 
-        {/* Google Sign In */}
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">lub</span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setError("Google OAuth wkrótce dostępny")}
-            className="mt-4 w-full py-3 px-4 border-2 border-gray-300 rounded-lg font-semibold text-gray-700 hover:bg-gray-50 transition-all flex items-center justify-center gap-2"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path
-                fill="currentColor"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="currentColor"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="currentColor"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Zaloguj się przez Google
-          </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-4 font-bold tracking-widest transition-all ${
+                loading
+                  ? "bg-gray-700 text-gray-500 cursor-not-allowed"
+                  : "bg-green-500/20 border-2 border-green-500 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+              }`}
+            >
+              {loading ? "⏳ ŁADOWANIE..." : isLogin ? "🔐 ZALOGUJ SIĘ" : "✨ UTWÓRZ KONTO"}
+            </button>
+          </form>
         </div>
-
-        {/* Footer */}
-        <p className="mt-6 text-center text-sm text-gray-600">
-          {isLogin ? "Nie masz konta?" : "Masz już konto?"}{" "}
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-indigo-600 font-semibold hover:text-indigo-700"
-          >
-            {isLogin ? "Zarejestruj się" : "Zaloguj się"}
-          </button>
-        </p>
       </div>
     </div>
   );
 }
 
-// ==================== DASHBOARD (After Login) ====================
+// ==================== DASHBOARD ====================
 function Dashboard({ user, onLogout }) {
   const [templates, setTemplates] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState("");
@@ -225,11 +263,7 @@ function Dashboard({ user, onLogout }) {
     subject: ""
   });
 
-  useEffect(() => {
-    fetchTemplates();
-  }, []);
-
-  const fetchTemplates = async () => {
+  const fetchTemplates = useCallback(async () => {
     try {
       const response = await axios.get(`${API}/templates`);
       setTemplates(response.data.templates || []);
@@ -240,7 +274,11 @@ function Dashboard({ user, onLogout }) {
       console.error("Błąd pobierania szablonów:", error);
       setMessage("❌ Nie można pobrać listy szablonów");
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, [fetchTemplates]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -272,7 +310,6 @@ function Dashboard({ user, onLogout }) {
 
       if (response.data.success) {
         setMessage(`✅ ${response.data.message}`);
-        // Reset formularza
         setFormData({
           recipient_email: "",
           full_name: "",
@@ -298,62 +335,66 @@ function Dashboard({ user, onLogout }) {
     }
   };
 
+  if (showAdminPanel) {
+    return <AdminPanel user={user} onBack={() => setShowAdminPanel(false)} />;
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Top Navigation */}
-      <nav className="bg-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <h1 className="text-2xl font-bold text-indigo-600">📧 DocGen</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700">
-                👤 <span className="font-semibold">{user.email}</span>
-              </span>
-              {user.role === "admin" && (
-                <button
-                  onClick={() => setShowAdminPanel(true)}
-                  className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-all"
-                >
-                  🔧 Panel Admina
-                </button>
-              )}
-              <button
-                onClick={onLogout}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
-              >
-                🚪 Wyloguj
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-mono">
+      {/* Navigation */}
+      <nav className="flex justify-between items-center px-8 py-6 border-b border-gray-800">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">🔒</span>
+          <span className="text-2xl font-bold tracking-wider">
+            <span className="text-orange-500">DOC</span>
+            <span className="text-green-400">GEN</span>
+          </span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-400 text-sm">
+            👤 <span className="text-green-400">{user.email}</span>
+          </span>
+          {user.role === "admin" && (
+            <button
+              onClick={() => setShowAdminPanel(true)}
+              className="px-4 py-2 border border-purple-500 text-purple-400 text-sm tracking-wider hover:bg-purple-500/10 transition-all"
+            >
+              🔧 ADMIN
+            </button>
+          )}
+          <button
+            onClick={onLogout}
+            className="px-4 py-2 border border-red-500 text-red-400 text-sm tracking-wider hover:bg-red-500/10 transition-all"
+          >
+            🚪 WYLOGUJ
+          </button>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto py-12 px-4">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold text-gray-900 mb-2">
-            Generator Dokumentów
-          </h2>
-          <p className="text-lg text-gray-600">
-            Dostępnych szablonów: <span className="font-bold text-indigo-600">{templates.length}</span>
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold tracking-wider mb-4">
+            GENERATOR <span className="text-green-400">DOKUMENTÓW</span>
+          </h1>
+          <p className="text-gray-500">
+            Dostępnych szablonów: <span className="text-cyan-400 font-bold">{templates.length}</span>
           </p>
         </div>
 
         {/* Form */}
-        <div className="bg-white shadow-2xl rounded-2xl p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Wybór szablonu */}
+        <div className="border border-gray-800 p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Template Selection */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                🎨 Wybierz Szablon
+              <label className="block text-xs text-gray-500 mb-2 tracking-widest">
+                🎨 WYBIERZ SZABLON
               </label>
               <select
                 value={selectedTemplate}
                 onChange={(e) => setSelectedTemplate(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white focus:border-green-500 focus:outline-none transition-all"
                 required
               >
                 {templates.map((template) => (
@@ -364,90 +405,90 @@ function Dashboard({ user, onLogout }) {
               </select>
             </div>
 
-            {/* Dane Odbiorcy */}
-            <div className="border-t-2 border-gray-200 pt-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">📬 Dane Odbiorcy</h3>
+            {/* Recipient Data */}
+            <div className="border-t border-gray-800 pt-8">
+              <h3 className="text-lg font-bold text-green-400 mb-6 tracking-wider">📬 DANE ODBIORCY</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email *</label>
+                  <label className="block text-xs text-gray-500 mb-2 tracking-widest">EMAIL *</label>
                   <input
                     type="email"
                     name="recipient_email"
                     value={formData.recipient_email}
                     onChange={handleInputChange}
                     placeholder="klient@example.com"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Imię i Nazwisko *</label>
+                  <label className="block text-xs text-gray-500 mb-2 tracking-widest">IMIĘ I NAZWISKO *</label>
                   <input
                     type="text"
                     name="full_name"
                     value={formData.full_name}
                     onChange={handleInputChange}
                     placeholder="Jan Kowalski"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
                     required
                   />
                 </div>
               </div>
             </div>
 
-            {/* Szczegóły Zamówienia */}
-            <div className="border-t-2 border-gray-200 pt-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">🛍️ Szczegóły Zamówienia</h3>
+            {/* Order Details */}
+            <div className="border-t border-gray-800 pt-8">
+              <h3 className="text-lg font-bold text-cyan-400 mb-6 tracking-wider">🛍️ SZCZEGÓŁY ZAMÓWIENIA</h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Numer Zamówienia *</label>
+                  <label className="block text-xs text-gray-500 mb-2 tracking-widest">NUMER ZAMÓWIENIA *</label>
                   <input
                     type="text"
                     name="order_number"
                     value={formData.order_number}
                     onChange={handleInputChange}
                     placeholder="NK-2026-12345"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Produkt</label>
+                  <label className="block text-xs text-gray-500 mb-2 tracking-widest">PRODUKT</label>
                   <input
                     type="text"
                     name="item_name"
                     value={formData.item_name}
                     onChange={handleInputChange}
                     placeholder="Nike Air Max"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Cena</label>
+                  <label className="block text-xs text-gray-500 mb-2 tracking-widest">CENA</label>
                   <input
                     type="text"
                     name="price"
                     value={formData.price}
                     onChange={handleInputChange}
                     placeholder="180.00"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Suma</label>
+                  <label className="block text-xs text-gray-500 mb-2 tracking-widest">SUMA</label>
                   <input
                     type="text"
                     name="total"
                     value={formData.total}
                     onChange={handleInputChange}
                     placeholder="190.46"
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-3 bg-[#111] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none transition-all"
                   />
                 </div>
               </div>
@@ -455,7 +496,7 @@ function Dashboard({ user, onLogout }) {
 
             {/* Message */}
             {message && (
-              <div className={`p-4 rounded-lg ${message.includes('✅') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+              <div className={`p-4 border ${message.includes('✅') ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-red-500/50 bg-red-500/10 text-red-400'}`}>
                 {message}
               </div>
             )}
@@ -464,13 +505,13 @@ function Dashboard({ user, onLogout }) {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-4 px-6 text-white font-bold rounded-lg text-lg transition-all ${
+              className={`w-full py-4 font-bold tracking-widest text-lg transition-all ${
                 loading 
-                  ? 'bg-gray-400 cursor-not-allowed' 
-                  : 'bg-indigo-600 hover:bg-indigo-700 hover:shadow-lg'
+                  ? 'bg-gray-700 text-gray-500 cursor-not-allowed' 
+                  : 'bg-green-500/20 border-2 border-green-500 text-green-400 hover:bg-green-500/30 hover:shadow-[0_0_30px_rgba(34,197,94,0.3)]'
               }`}
             >
-              {loading ? '⏳ Wysyłanie...' : '📧 Wygeneruj i Wyślij'}
+              {loading ? '⏳ WYSYŁANIE...' : '📧 WYGENERUJ I WYŚLIJ'}
             </button>
           </form>
         </div>
@@ -479,8 +520,357 @@ function Dashboard({ user, onLogout }) {
   );
 }
 
+// ==================== ADMIN PANEL ====================
+function AdminPanel({ user, onBack }) {
+  const [users, setUsers] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [activeTab, setActiveTab] = useState("users");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+  
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUser, setNewUser] = useState({
+    email: "",
+    password: "",
+    username: "",
+    role: "user"
+  });
+
+  const getAuthHeaders = useCallback(() => ({
+    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+  }), []);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/admin/users`, getAuthHeaders());
+      setUsers(response.data.users || []);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setMessage("❌ Błąd pobierania użytkowników");
+    }
+  }, [getAuthHeaders]);
+
+  const fetchDocuments = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/admin/documents`, getAuthHeaders());
+      setDocuments(response.data.documents || []);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+    }
+  }, [getAuthHeaders]);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API}/admin/stats`, getAuthHeaders());
+      setStats(response.data);
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+    }
+  }, [getAuthHeaders]);
+
+  useEffect(() => {
+    if (activeTab === "users") fetchUsers();
+    if (activeTab === "documents") fetchDocuments();
+    if (activeTab === "stats") fetchStats();
+  }, [activeTab, fetchUsers, fetchDocuments, fetchStats]);
+
+  const handleAddUser = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
+
+    try {
+      await axios.post(`${API}/admin/users`, newUser, getAuthHeaders());
+      setMessage("✅ Użytkownik dodany");
+      setShowAddUser(false);
+      setNewUser({ email: "", password: "", username: "", role: "user" });
+      fetchUsers();
+    } catch (error) {
+      setMessage(`❌ ${error.response?.data?.detail || "Błąd dodawania użytkownika"}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Czy na pewno chcesz usunąć tego użytkownika?")) return;
+
+    try {
+      await axios.delete(`${API}/admin/users/${userId}`, getAuthHeaders());
+      setMessage("✅ Użytkownik usunięty");
+      fetchUsers();
+    } catch (error) {
+      setMessage(`❌ ${error.response?.data?.detail || "Błąd usuwania"}`);
+    }
+  };
+
+  const handleToggleUser = async (userId, currentStatus) => {
+    try {
+      await axios.put(
+        `${API}/admin/users/${userId}/toggle`,
+        { is_active: !currentStatus },
+        getAuthHeaders()
+      );
+      setMessage(`✅ Status użytkownika zaktualizowany`);
+      fetchUsers();
+    } catch (error) {
+      setMessage(`❌ ${error.response?.data?.detail || "Błąd aktualizacji"}`);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-mono">
+      {/* Navigation */}
+      <nav className="flex justify-between items-center px-8 py-6 border-b border-gray-800">
+        <div className="flex items-center gap-4">
+          <span className="text-2xl">🔧</span>
+          <span className="text-2xl font-bold tracking-wider text-purple-400">
+            ADMIN PANEL
+          </span>
+        </div>
+        <button
+          onClick={onBack}
+          className="px-4 py-2 border border-gray-600 text-gray-400 text-sm tracking-wider hover:bg-gray-800 transition-all"
+        >
+          ← POWRÓT
+        </button>
+      </nav>
+
+      <div className="max-w-7xl mx-auto py-8 px-4">
+        {/* Tabs */}
+        <div className="flex gap-2 mb-8 border border-gray-800 p-2">
+          <button
+            onClick={() => setActiveTab("users")}
+            className={`flex-1 py-3 px-4 font-bold tracking-wider transition-all ${
+              activeTab === "users"
+                ? "bg-purple-500/20 text-purple-400 border-b-2 border-purple-500"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            👥 UŻYTKOWNICY
+          </button>
+          <button
+            onClick={() => setActiveTab("documents")}
+            className={`flex-1 py-3 px-4 font-bold tracking-wider transition-all ${
+              activeTab === "documents"
+                ? "bg-purple-500/20 text-purple-400 border-b-2 border-purple-500"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            📄 DOKUMENTY
+          </button>
+          <button
+            onClick={() => setActiveTab("stats")}
+            className={`flex-1 py-3 px-4 font-bold tracking-wider transition-all ${
+              activeTab === "stats"
+                ? "bg-purple-500/20 text-purple-400 border-b-2 border-purple-500"
+                : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            📊 STATYSTYKI
+          </button>
+        </div>
+
+        {/* Message */}
+        {message && (
+          <div className={`mb-6 p-4 border ${message.includes('✅') ? 'border-green-500/50 bg-green-500/10 text-green-400' : 'border-red-500/50 bg-red-500/10 text-red-400'}`}>
+            {message}
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="border border-gray-800 p-6">
+          {/* Users Tab */}
+          {activeTab === "users" && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold tracking-wider">UŻYTKOWNICY ({users.length})</h2>
+                <button
+                  onClick={() => setShowAddUser(!showAddUser)}
+                  className="px-4 py-2 border border-green-500 text-green-400 text-sm tracking-wider hover:bg-green-500/10 transition-all"
+                >
+                  {showAddUser ? "❌ ANULUJ" : "➕ DODAJ"}
+                </button>
+              </div>
+
+              {showAddUser && (
+                <form onSubmit={handleAddUser} className="mb-6 p-4 border border-gray-700 bg-[#111]">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={newUser.email}
+                      onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                      className="px-4 py-2 bg-[#0a0a0a] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none"
+                      required
+                    />
+                    <input
+                      type="text"
+                      placeholder="Nazwa użytkownika"
+                      value={newUser.username}
+                      onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                      className="px-4 py-2 bg-[#0a0a0a] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Hasło"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                      className="px-4 py-2 bg-[#0a0a0a] border border-gray-700 text-white placeholder-gray-600 focus:border-green-500 focus:outline-none"
+                      required
+                    />
+                    <select
+                      value={newUser.role}
+                      onChange={(e) => setNewUser({...newUser, role: e.target.value})}
+                      className="px-4 py-2 bg-[#0a0a0a] border border-gray-700 text-white focus:border-green-500 focus:outline-none"
+                    >
+                      <option value="user">User</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="mt-4 px-6 py-2 bg-green-500/20 border border-green-500 text-green-400 font-bold tracking-wider hover:bg-green-500/30 transition-all"
+                  >
+                    {loading ? "DODAWANIE..." : "DODAJ"}
+                  </button>
+                </form>
+              )}
+
+              {/* Users Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-gray-700">
+                    <tr className="text-gray-500 text-xs tracking-widest">
+                      <th className="px-4 py-3 text-left">EMAIL</th>
+                      <th className="px-4 py-3 text-left">NAZWA</th>
+                      <th className="px-4 py-3 text-left">ROLA</th>
+                      <th className="px-4 py-3 text-left">STATUS</th>
+                      <th className="px-4 py-3 text-left">DATA</th>
+                      <th className="px-4 py-3 text-left">AKCJE</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {users.map((u) => (
+                      <tr key={u.id} className="hover:bg-gray-900/50">
+                        <td className="px-4 py-3 text-white">{u.email}</td>
+                        <td className="px-4 py-3 text-gray-400">{u.username}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 text-xs font-bold tracking-wider ${
+                            u.role === 'admin' ? 'text-purple-400 border border-purple-500' : 'text-cyan-400 border border-cyan-500'
+                          }`}>
+                            {u.role.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 text-xs font-bold tracking-wider ${
+                            u.is_active ? 'text-green-400 border border-green-500' : 'text-red-400 border border-red-500'
+                          }`}>
+                            {u.is_active ? 'AKTYWNY' : 'NIEAKTYWNY'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => handleToggleUser(u.id, u.is_active)}
+                            disabled={u.id === user.id}
+                            className="mr-2 px-3 py-1 text-xs border border-yellow-500 text-yellow-400 hover:bg-yellow-500/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          >
+                            {u.is_active ? '🔒' : '✅'}
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(u.id)}
+                            disabled={u.id === user.id}
+                            className="px-3 py-1 text-xs border border-red-500 text-red-400 hover:bg-red-500/10 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Documents Tab */}
+          {activeTab === "documents" && (
+            <div>
+              <h2 className="text-xl font-bold tracking-wider mb-6">HISTORIA DOKUMENTÓW ({documents.length})</h2>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-gray-700">
+                    <tr className="text-gray-500 text-xs tracking-widest">
+                      <th className="px-4 py-3 text-left">SZABLON</th>
+                      <th className="px-4 py-3 text-left">EMAIL</th>
+                      <th className="px-4 py-3 text-left">NR ZAMÓWIENIA</th>
+                      <th className="px-4 py-3 text-left">DATA</th>
+                      <th className="px-4 py-3 text-left">STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-800">
+                    {documents.map((doc) => (
+                      <tr key={doc.id} className="hover:bg-gray-900/50">
+                        <td className="px-4 py-3 text-green-400 font-bold">{doc.template}</td>
+                        <td className="px-4 py-3 text-white">{doc.recipient_email}</td>
+                        <td className="px-4 py-3 text-gray-400">{doc.order_number}</td>
+                        <td className="px-4 py-3 text-gray-500">
+                          {new Date(doc.created_at).toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 text-xs font-bold tracking-wider ${
+                            doc.email_sent ? 'text-green-400 border border-green-500' : 'text-red-400 border border-red-500'
+                          }`}>
+                            {doc.email_sent ? '✅ WYSŁANO' : '❌ BŁĄD'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Stats Tab */}
+          {activeTab === "stats" && stats && (
+            <div>
+              <h2 className="text-xl font-bold tracking-wider mb-6">STATYSTYKI SYSTEMU</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="border border-cyan-500/50 bg-cyan-500/10 p-6">
+                  <h3 className="text-lg font-bold text-cyan-400 mb-4 tracking-wider">👥 UŻYTKOWNICY</h3>
+                  <div className="text-4xl font-bold text-white mb-2">{stats.users?.total || 0}</div>
+                  <p className="text-gray-500 text-sm">Łącznie</p>
+                  <div className="mt-4 pt-4 border-t border-cyan-500/30 space-y-1">
+                    <p className="text-sm text-green-400">✅ Aktywni: {stats.users?.active || 0}</p>
+                    <p className="text-sm text-red-400">🔒 Nieaktywni: {stats.users?.inactive || 0}</p>
+                  </div>
+                </div>
+
+                <div className="border border-green-500/50 bg-green-500/10 p-6">
+                  <h3 className="text-lg font-bold text-green-400 mb-4 tracking-wider">📄 DOKUMENTY</h3>
+                  <div className="text-4xl font-bold text-white mb-2">{stats.documents?.total || 0}</div>
+                  <p className="text-gray-500 text-sm">Łącznie</p>
+                  <div className="mt-4 pt-4 border-t border-green-500/30 space-y-1">
+                    <p className="text-sm text-green-400">✅ Wysłane: {stats.documents?.sent || 0}</p>
+                    <p className="text-sm text-red-400">❌ Błędy: {stats.documents?.failed || 0}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ==================== MAIN APP ====================
-// Helper function to get initial user from localStorage
 const getInitialUser = () => {
   const token = localStorage.getItem("token");
   const savedUser = localStorage.getItem("user");
@@ -500,22 +890,29 @@ const getInitialUser = () => {
 
 function App() {
   const [user, setUser] = useState(getInitialUser);
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
+    setShowLogin(false);
   };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
+    setShowLogin(false);
   };
 
-  return user ? (
-    <Dashboard user={user} onLogout={handleLogout} />
-  ) : (
-    <AuthPage onLoginSuccess={handleLoginSuccess} />
-  );
+  if (user) {
+    return <Dashboard user={user} onLogout={handleLogout} />;
+  }
+
+  if (showLogin) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} onBack={() => setShowLogin(false)} />;
+  }
+
+  return <LandingPage onAccessSystem={() => setShowLogin(true)} />;
 }
 
 export default App;
