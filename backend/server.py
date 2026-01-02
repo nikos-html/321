@@ -117,11 +117,17 @@ class DocumentGenerateRequest(BaseModel):
     delivery_date: Optional[str] = Field(None, description="Estimated delivery date")
     order_number: str = Field(..., description="Order number")
     item_name: Optional[str] = Field(None, description="Product name")
+    size: Optional[str] = Field(None, description="Product size")
     price: Optional[str] = Field(None, description="Item price")
     total: Optional[str] = Field(None, description="Total amount")
     card_last4: Optional[str] = Field(None, description="Last 4 digits of card")
     currency: Optional[str] = Field("$", description="Currency symbol")
     subject: Optional[str] = Field(None, description="Email subject")
+    product_image: Optional[str] = Field(None, description="Product image URL")
+    quantity: Optional[str] = Field("1", description="Quantity")
+    tracking_number: Optional[str] = Field(None, description="Tracking number")
+    phone: Optional[str] = Field(None, description="Phone number")
+    notes: Optional[str] = Field(None, description="Additional notes")
     additional_data: Optional[Dict[str, Any]] = Field(None, description="Additional placeholder replacements")
 
 class DocumentResponse(BaseModel):
