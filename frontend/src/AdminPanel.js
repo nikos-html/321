@@ -1,11 +1,9 @@
 import { useState, useEffect } from "react";
-import "./App.css";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || "http://localhost:8001";
 const API = `${BACKEND_URL}/api`;
 
-// ==================== ADMIN PANEL ====================
 function AdminPanel({ user, onBack }) {
   const [users, setUsers] = useState([]);
   const [documents, setDocuments] = useState([]);
@@ -362,5 +360,4 @@ function AdminPanel({ user, onBack }) {
   );
 }
 
-// Import pozostałe komponenty z poprzedniego App.js
-// (AuthPage i Dashboard pozostają bez zmian)
+export default AdminPanel;
