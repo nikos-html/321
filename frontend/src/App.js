@@ -29,7 +29,7 @@ const TEMPLATE_FIELDS = {
   },
   stockx_new: {
     name: "StockX",
-    fields: ["recipient_email", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image", "shipping"]
+    fields: ["recipient_email", "delivery_date", "order_number", "item_name", "size", "price", "total", "product_image", "shipping", "style_id"]
   },
   stussy: {
     name: "Stussy",
