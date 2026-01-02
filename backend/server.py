@@ -227,7 +227,7 @@ def generate_html_from_template(template_name: str, data: Dict[str, Any]) -> str
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash"""
     try:
-        return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:
         logger.error(f"❌ Password verification error: {e}")
         return False
