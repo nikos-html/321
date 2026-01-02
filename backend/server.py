@@ -673,15 +673,24 @@ async def get_admin_stats(admin: dict = Depends(get_admin_user)):
 async def login(credentials: UserLogin):
     """Login endpoint for users"""
     try:
+        logger.info(f"🔐 Login attempt for: {credentials.email}")
         user = await db.users.find_one({"email": credentials.email}, {"_id": 0})
+        logger.info(f"🔐 User found: {user is not None}")
 
         if not user:
+            logger.warning(f"❌ User not found: {credentials.email}")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
             )
 
-        if not verify_password(credentials.password, user.get('hashed_password', user.get('password', ''))):
+        stored_hash = user.get('hashed_password', user.get('password', ''))
+        logger.info(f"🔐 Hash exists: {bool(stored_hash)}, length: {len(stored_hash) if stored_hash else 0}")
+        
+        is_valid = verify_password(credentials.password, stored_hash)
+        logger.info(f"🔐 Password valid: {is_valid}")
+        
+        if not is_valid:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password"
