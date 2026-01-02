@@ -480,26 +480,26 @@ function Dashboard({ user, onLogout }) {
 }
 
 // ==================== MAIN APP ====================
-function App() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Check if user is already logged in
-    const token = localStorage.getItem("token");
-    const savedUser = localStorage.getItem("user");
-    
-    if (token && savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch (error) {
-        console.error("Error parsing saved user:", error);
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-      }
+// Helper function to get initial user from localStorage
+const getInitialUser = () => {
+  const token = localStorage.getItem("token");
+  const savedUser = localStorage.getItem("user");
+  
+  if (token && savedUser) {
+    try {
+      return JSON.parse(savedUser);
+    } catch (error) {
+      console.error("Error parsing saved user:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      return null;
     }
-    setLoading(false);
-  }, []);
+  }
+  return null;
+};
+
+function App() {
+  const [user, setUser] = useState(getInitialUser);
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
@@ -510,14 +510,6 @@ function App() {
     localStorage.removeItem("user");
     setUser(null);
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-2xl">⏳ Ładowanie...</div>
-      </div>
-    );
-  }
 
   return user ? (
     <Dashboard user={user} onLogout={handleLogout} />
