@@ -756,6 +756,32 @@ async def get_admin_stats(admin: dict = Depends(get_admin_user)):
 
 # ==================== AUTHENTICATION ENDPOINTS ====================
 
+@api_router.get("/auth/debug")
+async def debug_auth():
+    """Debug endpoint to check database and users"""
+    try:
+        db_name = os.getenv('DB_NAME', 'MongoDB')
+        users = await db.users.find({}, {"_id": 0, "email": 1, "role": 1, "hashed_password": 1}).to_list(100)
+        
+        users_info = []
+        for u in users:
+            hp = u.get('hashed_password', u.get('password', ''))
+            users_info.append({
+                "email": u.get('email'),
+                "role": u.get('role'),
+                "hash_exists": bool(hp),
+                "hash_length": len(hp) if hp else 0,
+                "hash_prefix": hp[:20] if hp else "NO HASH"
+            })
+        
+        return {
+            "db_name": db_name,
+            "users_count": len(users),
+            "users": users_info
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
 @api_router.post("/auth/reset-admin")
 async def reset_admin_password():
     """
@@ -764,23 +790,33 @@ async def reset_admin_password():
     """
     try:
         # Delete existing admin if exists
-        await db.users.delete_one({"email": "admin@docgen.pl"})
+        deleted = await db.users.delete_many({"email": "admin@docgen.pl"})
         
         # Create new admin with correct password hash
+        hashed = pwd_context.hash("admin123")
         admin = {
             "id": str(uuid.uuid4()),
             "email": "admin@docgen.pl",
             "username": "Admin",
-            "hashed_password": pwd_context.hash("admin123"),
+            "hashed_password": hashed,
             "role": "admin",
             "is_active": True,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
         await db.users.insert_one(admin)
-        logger.info("✅ Admin user reset: admin@docgen.pl / admin123")
         
-        return {"success": True, "message": "Admin reset. Login: admin@docgen.pl / admin123"}
+        # Verify it was created correctly
+        check = await db.users.find_one({"email": "admin@docgen.pl"}, {"_id": 0})
+        verify_test = pwd_context.verify("admin123", check.get('hashed_password', ''))
+        
+        return {
+            "success": True, 
+            "message": "Admin reset. Login: admin@docgen.pl / admin123",
+            "deleted_count": deleted.deleted_count,
+            "verify_test": verify_test,
+            "hash_prefix": hashed[:30]
+        }
     except Exception as e:
         logger.error(f"❌ Error resetting admin: {e}")
         raise HTTPException(status_code=500, detail=str(e))
