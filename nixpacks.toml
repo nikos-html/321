@@ -1,7 +1,7 @@
 # Nixpacks configuration for Railway deployment
 
 [phases.setup]
-nixPkgs = ['python311', 'nodejs-18_x', 'python311Packages.pip', 'python311Packages.virtualenv']
+nixPkgs = ['python311', 'nodejs_20', 'python311Packages.pip', 'python311Packages.virtualenv']
 
 [phases.install]
 cmds = [
