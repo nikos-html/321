@@ -512,22 +512,39 @@ app.add_middleware(
 
 # Serve static files from frontend build (for production)
 FRONTEND_BUILD = Path(__file__).parent.parent / "frontend" / "build"
+
+# Mount static files if build exists
 if FRONTEND_BUILD.exists():
     static_dir = FRONTEND_BUILD / "static"
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+        logger.info(f"✅ Mounted static files from {static_dir}")
 
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
+# Serve index.html for all non-API routes (SPA routing)
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str):
+    """Serve React SPA - catch all non-API routes"""
+    # Don't intercept API routes
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+    
+    # Try to serve specific file if exists
+    if FRONTEND_BUILD.exists():
         file_path = FRONTEND_BUILD / full_path
         if file_path.is_file():
             return FileResponse(file_path)
         
+        # Serve index.html for all other routes (SPA routing)
         index_file = FRONTEND_BUILD / "index.html"
         if index_file.exists():
             return FileResponse(index_file)
-        
-        return {"error": "Frontend not found"}
+    
+    # Fallback if no frontend build
+    return {
+        "error": "Frontend not built",
+        "message": "Run 'cd frontend && npm run build' to build the frontend",
+        "api_docs": "/docs"
+    }
 
 @app.on_event("startup")
 async def startup_event():
