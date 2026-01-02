@@ -761,17 +761,17 @@ async def debug_auth():
     """Debug endpoint to check database and users"""
     try:
         db_name = os.getenv('DB_NAME', 'MongoDB')
-        users = await db.users.find({}, {"_id": 0, "email": 1, "role": 1, "hashed_password": 1}).to_list(100)
+        # Get ALL fields from users
+        users = await db.users.find({}, {"_id": 0}).to_list(100)
         
         users_info = []
         for u in users:
-            hp = u.get('hashed_password', u.get('password', ''))
             users_info.append({
                 "email": u.get('email'),
                 "role": u.get('role'),
-                "hash_exists": bool(hp),
-                "hash_length": len(hp) if hp else 0,
-                "hash_prefix": hp[:20] if hp else "NO HASH"
+                "all_keys": list(u.keys()),
+                "hashed_password_exists": 'hashed_password' in u,
+                "password_exists": 'password' in u
             })
         
         return {
@@ -786,15 +786,17 @@ async def debug_auth():
 async def reset_admin_password():
     """
     Emergency endpoint to reset/create admin user with known password.
-    This creates admin@docgen.pl with password 'admin123'
     """
     try:
-        # Delete existing admin if exists
+        # Delete ALL existing admins with this email
         deleted = await db.users.delete_many({"email": "admin@docgen.pl"})
         
-        # Create new admin with correct password hash
-        hashed = pwd_context.hash("admin123")
-        admin = {
+        # Create hash
+        plain_password = "admin123"
+        hashed = pwd_context.hash(plain_password)
+        
+        # Create admin document
+        admin_doc = {
             "id": str(uuid.uuid4()),
             "email": "admin@docgen.pl",
             "username": "Admin",
@@ -804,22 +806,30 @@ async def reset_admin_password():
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         
-        await db.users.insert_one(admin)
+        # Insert
+        result = await db.users.insert_one(admin_doc)
         
-        # Verify it was created correctly
-        check = await db.users.find_one({"email": "admin@docgen.pl"}, {"_id": 0})
-        verify_test = pwd_context.verify("admin123", check.get('hashed_password', ''))
+        # Verify it was saved correctly
+        saved_user = await db.users.find_one({"email": "admin@docgen.pl"}, {"_id": 0})
+        
+        # Test verification
+        saved_hash = saved_user.get('hashed_password', '') if saved_user else ''
+        verify_result = pwd_context.verify(plain_password, saved_hash) if saved_hash else False
         
         return {
-            "success": True, 
-            "message": "Admin reset. Login: admin@docgen.pl / admin123",
+            "success": True,
             "deleted_count": deleted.deleted_count,
-            "verify_test": verify_test,
-            "hash_prefix": hashed[:30]
+            "inserted_id": str(result.inserted_id),
+            "saved_user_keys": list(saved_user.keys()) if saved_user else [],
+            "hash_saved": bool(saved_hash),
+            "hash_length": len(saved_hash),
+            "verify_test": verify_result,
+            "original_hash_prefix": hashed[:30],
+            "saved_hash_prefix": saved_hash[:30] if saved_hash else "NONE"
         }
     except Exception as e:
-        logger.error(f"❌ Error resetting admin: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
 
 @api_router.post("/auth/login", response_model=LoginResponse)
 async def login(credentials: UserLogin):
